@@ -35,6 +35,8 @@ function initTables(db: Database.Database) {
       height_cm REAL,
       activity_level TEXT NOT NULL DEFAULT 'moderate',
       goal TEXT NOT NULL DEFAULT 'maintain',
+      gender TEXT NOT NULL DEFAULT 'neutral',
+      body_fat_pct REAL,
       target_calories REAL NOT NULL DEFAULT 2000,
       target_protein_g REAL NOT NULL DEFAULT 150,
       target_carbs_g REAL NOT NULL DEFAULT 250,
@@ -94,20 +96,27 @@ function initTables(db: Database.Database) {
       UNIQUE(user_id, food_item_id)
     );
 
+    CREATE TABLE IF NOT EXISTS sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      token TEXT UNIQUE NOT NULL,
+      user_id INTEGER NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_food_log_date ON food_log(user_id, logged_date);
     CREATE INDEX IF NOT EXISTS idx_food_log_meal ON food_log(user_id, logged_date, meal_type);
     CREATE INDEX IF NOT EXISTS idx_weight_log_date ON weight_log(user_id, logged_date);
     CREATE INDEX IF NOT EXISTS idx_food_items_name ON food_items(name);
+    CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
   `);
 
-  // Seed default user if none exist
-  const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
-  if (userCount.c === 0) {
-    db.prepare(`
-      INSERT INTO users (email, password_hash, name, age, weight_kg, height_cm, activity_level, goal)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run('demo@nutritrack.app', '$2a$10$placeholder', 'Demo User', 25, 75, 175, 'moderate', 'maintain');
-  }
+  // Migrate: add new columns if they don't exist yet (safe to run repeatedly)
+  try { db.exec("ALTER TABLE users ADD COLUMN gender TEXT NOT NULL DEFAULT 'neutral'"); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN body_fat_pct REAL'); } catch {}
+
+  // No demo user seed — users register themselves
 
   // Seed common foods if table is empty
   const foodCount = db.prepare('SELECT COUNT(*) as c FROM food_items').get() as { c: number };
@@ -119,7 +128,7 @@ function initTables(db: Database.Database) {
 function seedCommonFoods(db: Database.Database) {
   const stmt = db.prepare(`
     INSERT INTO food_items (name, brand, category, serving_size, serving_unit, calories, protein_g, carbs_g, fat_g, fiber_g, sugar_g, sodium_mg, cholesterol_mg, saturated_fat_g, is_custom)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const foods = [

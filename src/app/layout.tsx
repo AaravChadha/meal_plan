@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
   title: "NutriTrack — Nutrition Tracking Dashboard",
@@ -15,12 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="app-layout">
-          <Sidebar />
-          <main className="main-content">
-            {children}
-          </main>
-        </div>
+        {children}
       </body>
     </html>
   );

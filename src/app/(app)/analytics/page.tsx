@@ -30,7 +30,7 @@ export default function AnalyticsPage() {
       const start = startDate.toISOString().slice(0, 10);
 
       try {
-        const res = await fetch(`/api/summary?start=${start}&end=${end}&user_id=1`);
+        const res = await fetch(`/api/summary?start=${start}&end=${end}`);
         const result = await res.json();
         if (result.success) setData(result.data);
       } catch (err) {

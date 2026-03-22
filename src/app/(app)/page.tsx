@@ -65,8 +65,8 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [summaryRes, mealsRes] = await Promise.all([
-        fetch(`/api/summary?date=${date}&user_id=1`),
-        fetch(`/api/food-log?date=${date}&user_id=1`),
+        fetch(`/api/summary?date=${date}`),
+        fetch(`/api/food-log?date=${date}`),
       ]);
       const summaryData = await summaryRes.json();
       const mealsData = await mealsRes.json();

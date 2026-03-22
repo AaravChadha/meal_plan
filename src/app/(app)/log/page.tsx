@@ -81,7 +81,7 @@ export default function FoodLogPage() {
 
   const fetchMeals = useCallback(async () => {
     try {
-      const res = await fetch(`/api/food-log?date=${date}&user_id=1`);
+      const res = await fetch(`/api/food-log?date=${date}`);
       const data = await res.json();
       if (data.success) setMeals(data.data);
     } catch (err) {
@@ -124,7 +124,6 @@ export default function FoodLogPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: 1,
           food_item_id: foodItemId,
           meal_type: selectedMealType,
           servings,
@@ -168,7 +167,6 @@ export default function FoodLogPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: 1,
           food_item_id: foodItemId,
           meal_type: selectedMealType,
           servings: 1,
@@ -405,7 +403,6 @@ export default function FoodLogPage() {
               <div className="modal-title">✏️ Create Custom Food</div>
               <div className="modal-subtitle">Enter the food name and set the nutrition values yourself</div>
 
-              {/* Food Name & Brand */}
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Food Name *</label>
@@ -430,7 +427,6 @@ export default function FoodLogPage() {
                 </div>
               </div>
 
-              {/* Serving */}
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Serving Size</label>
@@ -461,12 +457,10 @@ export default function FoodLogPage() {
                 </div>
               </div>
 
-              {/* Section Header: Macronutrients */}
               <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', marginTop: '8px', borderTop: '1px solid var(--border-primary)', paddingTop: '16px' }}>
                 Macronutrients
               </div>
 
-              {/* Calories + Auto Calc */}
               <div className="form-group">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <label className="form-label" style={{ marginBottom: 0 }}>Calories (kcal)</label>
@@ -475,7 +469,6 @@ export default function FoodLogPage() {
                     className="btn btn-secondary btn-sm"
                     onClick={autoCalcCalories}
                     style={{ fontSize: '11px', padding: '4px 10px' }}
-                    title="Calculate calories from protein, carbs, and fat"
                   >
                     ⚡ Auto-calc from macros
                   </button>
@@ -492,54 +485,25 @@ export default function FoodLogPage() {
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label" style={{ color: 'var(--color-protein)' }}>Protein (g)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customFood.protein_g}
-                    onChange={(e) => updateCustomField('protein_g', e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
+                  <input type="number" className="form-input" value={customFood.protein_g} onChange={(e) => updateCustomField('protein_g', e.target.value)} min="0" step="0.1" />
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ color: 'var(--color-carbs)' }}>Carbs (g)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customFood.carbs_g}
-                    onChange={(e) => updateCustomField('carbs_g', e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
+                  <input type="number" className="form-input" value={customFood.carbs_g} onChange={(e) => updateCustomField('carbs_g', e.target.value)} min="0" step="0.1" />
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label" style={{ color: 'var(--color-fat)' }}>Fat (g)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customFood.fat_g}
-                    onChange={(e) => updateCustomField('fat_g', e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
+                  <input type="number" className="form-input" value={customFood.fat_g} onChange={(e) => updateCustomField('fat_g', e.target.value)} min="0" step="0.1" />
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ color: 'var(--color-fiber)' }}>Fiber (g)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customFood.fiber_g}
-                    onChange={(e) => updateCustomField('fiber_g', e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
+                  <input type="number" className="form-input" value={customFood.fiber_g} onChange={(e) => updateCustomField('fiber_g', e.target.value)} min="0" step="0.1" />
                 </div>
               </div>
 
-              {/* Section Header: Micronutrients */}
               <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', marginTop: '8px', borderTop: '1px solid var(--border-primary)', paddingTop: '16px' }}>
                 Micronutrients (optional)
               </div>
@@ -547,60 +511,29 @@ export default function FoodLogPage() {
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Sugar (g)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customFood.sugar_g}
-                    onChange={(e) => updateCustomField('sugar_g', e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
+                  <input type="number" className="form-input" value={customFood.sugar_g} onChange={(e) => updateCustomField('sugar_g', e.target.value)} min="0" step="0.1" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Sodium (mg)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customFood.sodium_mg}
-                    onChange={(e) => updateCustomField('sodium_mg', e.target.value)}
-                    min="0"
-                  />
+                  <input type="number" className="form-input" value={customFood.sodium_mg} onChange={(e) => updateCustomField('sodium_mg', e.target.value)} min="0" />
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Cholesterol (mg)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customFood.cholesterol_mg}
-                    onChange={(e) => updateCustomField('cholesterol_mg', e.target.value)}
-                    min="0"
-                  />
+                  <input type="number" className="form-input" value={customFood.cholesterol_mg} onChange={(e) => updateCustomField('cholesterol_mg', e.target.value)} min="0" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Saturated Fat (g)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customFood.saturated_fat_g}
-                    onChange={(e) => updateCustomField('saturated_fat_g', e.target.value)}
-                    min="0"
-                    step="0.1"
-                  />
+                  <input type="number" className="form-input" value={customFood.saturated_fat_g} onChange={(e) => updateCustomField('saturated_fat_g', e.target.value)} min="0" step="0.1" />
                 </div>
               </div>
 
-              {/* Meal Selector */}
               <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: '16px', marginTop: '8px' }}>
                 <div className="form-group">
                   <label className="form-label">Add to Meal</label>
-                  <select
-                    className="form-select"
-                    value={selectedMealType}
-                    onChange={(e) => setSelectedMealType(e.target.value)}
-                  >
+                  <select className="form-select" value={selectedMealType} onChange={(e) => setSelectedMealType(e.target.value)}>
                     <option value="breakfast">🌅 Breakfast</option>
                     <option value="lunch">☀️ Lunch</option>
                     <option value="dinner">🌙 Dinner</option>
@@ -609,31 +542,22 @@ export default function FoodLogPage() {
                 </div>
               </div>
 
-              {/* Live preview */}
               {customFood.name && (
                 <div className="modal-food-preview" style={{ marginBottom: 0, marginTop: '8px' }}>
                   <div className="modal-food-stat">
-                    <div className="modal-food-stat-value" style={{ color: 'var(--color-calories)' }}>
-                      {customFood.calories}
-                    </div>
+                    <div className="modal-food-stat-value" style={{ color: 'var(--color-calories)' }}>{customFood.calories}</div>
                     <div className="modal-food-stat-label">Calories</div>
                   </div>
                   <div className="modal-food-stat">
-                    <div className="modal-food-stat-value" style={{ color: 'var(--color-protein)' }}>
-                      {customFood.protein_g}g
-                    </div>
+                    <div className="modal-food-stat-value" style={{ color: 'var(--color-protein)' }}>{customFood.protein_g}g</div>
                     <div className="modal-food-stat-label">Protein</div>
                   </div>
                   <div className="modal-food-stat">
-                    <div className="modal-food-stat-value" style={{ color: 'var(--color-carbs)' }}>
-                      {customFood.carbs_g}g
-                    </div>
+                    <div className="modal-food-stat-value" style={{ color: 'var(--color-carbs)' }}>{customFood.carbs_g}g</div>
                     <div className="modal-food-stat-label">Carbs</div>
                   </div>
                   <div className="modal-food-stat">
-                    <div className="modal-food-stat-value" style={{ color: 'var(--color-fat)' }}>
-                      {customFood.fat_g}g
-                    </div>
+                    <div className="modal-food-stat-value" style={{ color: 'var(--color-fat)' }}>{customFood.fat_g}g</div>
                     <div className="modal-food-stat-label">Fat</div>
                   </div>
                 </div>
@@ -641,11 +565,7 @@ export default function FoodLogPage() {
 
               <div className="modal-actions">
                 <button className="btn btn-secondary" onClick={() => setShowCustomModal(false)}>Cancel</button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleAddCustomFood}
-                  disabled={!customFood.name.trim()}
-                >
+                <button className="btn btn-primary" onClick={handleAddCustomFood} disabled={!customFood.name.trim()}>
                   Save & Add to {MEAL_LABELS[selectedMealType]}
                 </button>
               </div>

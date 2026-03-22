@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { getSessionUser } from '@/lib/auth';
 
-// GET /api/food-log?date=2024-01-15&user_id=1
+// GET /api/food-log?date=2024-01-15
 export async function GET(request: NextRequest) {
+  const userId = getSessionUser(request);
+  if (!userId) {
+    return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+  }
   const date = request.nextUrl.searchParams.get('date') || new Date().toISOString().slice(0, 10);
-  const userId = parseInt(request.nextUrl.searchParams.get('user_id') || '1');
 
   const db = getDb();
 
@@ -33,11 +37,16 @@ export async function GET(request: NextRequest) {
 
 // POST /api/food-log — Add a food log entry
 export async function POST(request: NextRequest) {
+  const userId = getSessionUser(request);
+  if (!userId) {
+    return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+  }
   try {
     const body = await request.json();
     const db = getDb();
 
-    const { user_id = 1, food_item_id, meal_type, servings = 1, logged_date } = body;
+    const { food_item_id, meal_type, servings = 1, logged_date } = body;
+    const user_id = userId;
 
     if (!food_item_id || !meal_type || !logged_date) {
       return NextResponse.json(

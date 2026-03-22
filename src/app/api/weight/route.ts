@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { getSessionUser } from '@/lib/auth';
 
-// GET /api/weight?user_id=1&limit=30
+// GET /api/weight?limit=30
 export async function GET(request: NextRequest) {
-  const userId = parseInt(request.nextUrl.searchParams.get('user_id') || '1');
+  const userId = getSessionUser(request);
+  if (!userId) {
+    return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+  }
   const limit = parseInt(request.nextUrl.searchParams.get('limit') || '30');
 
   const db = getDb();
@@ -19,11 +23,16 @@ export async function GET(request: NextRequest) {
 
 // POST /api/weight — Log a weight entry
 export async function POST(request: NextRequest) {
+  const userId = getSessionUser(request);
+  if (!userId) {
+    return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+  }
   try {
     const body = await request.json();
     const db = getDb();
 
-    const { user_id = 1, weight_kg, logged_date } = body;
+    const { weight_kg, logged_date } = body;
+    const user_id = userId;
 
     if (!weight_kg || !logged_date) {
       return NextResponse.json(

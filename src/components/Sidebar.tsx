@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
   {
@@ -48,6 +49,23 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setUser(data.data); });
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  };
+
+  const initials = user?.name
+    ? user.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+    : '?';
 
   return (
     <aside className="sidebar">
@@ -72,15 +90,39 @@ export default function Sidebar() {
           <div style={{
             width: 32, height: 32, borderRadius: '50%',
             background: 'var(--gradient-hero)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', fontSize: '14px'
+            alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700,
+            flexShrink: 0,
           }}>
-            D
+            {initials}
           </div>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: 600 }}>Demo User</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>demo@nutritrack.app</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.name ?? '...'}
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.email ?? ''}
+            </div>
           </div>
         </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            width: '100%', marginTop: '8px', padding: '8px 12px',
+            background: 'none', border: 'none', borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            transition: 'background var(--transition-fast)',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          Sign out
+        </button>
       </div>
     </aside>
   );

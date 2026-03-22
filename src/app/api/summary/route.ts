@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { calcMacroPercentages } from '@/lib/nutrients';
+import { getSessionUser } from '@/lib/auth';
 
-// GET /api/summary?date=2024-01-15&user_id=1
-// GET /api/summary?start=2024-01-01&end=2024-01-07&user_id=1  (range)
+// GET /api/summary?date=2024-01-15
+// GET /api/summary?start=2024-01-01&end=2024-01-07  (range)
 export async function GET(request: NextRequest) {
-  const userId = parseInt(request.nextUrl.searchParams.get('user_id') || '1');
+  const userId = getSessionUser(request);
+  if (!userId) {
+    return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+  }
   const date = request.nextUrl.searchParams.get('date');
   const start = request.nextUrl.searchParams.get('start');
   const end = request.nextUrl.searchParams.get('end');

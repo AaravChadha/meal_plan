@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { getSessionUser } from '@/lib/auth';
 
-// GET /api/profile?user_id=1
+// GET /api/profile
 export async function GET(request: NextRequest) {
-  const userId = parseInt(request.nextUrl.searchParams.get('user_id') || '1');
+  const userId = getSessionUser(request);
+  if (!userId) {
+    return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+  }
   const db = getDb();
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
@@ -18,14 +22,18 @@ export async function GET(request: NextRequest) {
 
 // PUT /api/profile — Update user profile or targets
 export async function PUT(request: NextRequest) {
+  const userId = getSessionUser(request);
+  if (!userId) {
+    return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+  }
   try {
     const body = await request.json();
-    const userId = body.user_id || 1;
     const db = getDb();
 
     // Build dynamic update
     const allowedFields = [
       'name', 'age', 'weight_kg', 'height_cm', 'activity_level', 'goal',
+      'gender', 'body_fat_pct',
       'target_calories', 'target_protein_g', 'target_carbs_g', 'target_fat_g',
       'target_fiber_g', 'target_sodium_mg',
     ];
