@@ -264,6 +264,7 @@ function ComparisonTable({ profile }: { profile: Profile }) {
     { label: 'Carbs', workout: profile.target_carbs_g, rest: profile.rest_target_carbs_g, unit: 'g', color: 'var(--color-carbs)' },
     { label: 'Fat', workout: profile.target_fat_g, rest: profile.rest_target_fat_g, unit: 'g', color: 'var(--color-fat)' },
     { label: 'Fiber', workout: profile.target_fiber_g, rest: profile.rest_target_fiber_g, unit: 'g', color: 'var(--text-muted)' },
+    { label: 'Sodium', workout: profile.target_sodium_mg, rest: profile.rest_target_sodium_mg, unit: 'mg', color: 'var(--text-muted)' },
   ];
 
   return (

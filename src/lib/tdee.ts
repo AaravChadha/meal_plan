@@ -41,9 +41,18 @@ export function calculateBMR(
  * Katch-McArdle BMR — more accurate when body fat % is known
  * because it's based on lean body mass, not total weight.
  * Formula: 370 + 21.6 * lean_mass_kg
+ * Source: Katch & McArdle, 1983
+ *
+ * Note: has no age term — assumes age-related decline is captured by
+ * lean mass changes. For age 50+, apply correction of ~50 kcal/decade
+ * (Poehlman, 1993, Endocr Rev).
  */
-export function calculateKatchMcArdleBMR(lean_mass_kg: number): number {
-  return Math.round(370 + 21.6 * lean_mass_kg);
+export function calculateKatchMcArdleBMR(lean_mass_kg: number, age: number = 25): number {
+  let bmr = 370 + 21.6 * lean_mass_kg;
+  if (age >= 50) {
+    bmr -= ((age - 50) / 10) * 50; // ~50 kcal/decade correction
+  }
+  return Math.round(bmr);
 }
 
 export function calculateTDEE(
@@ -57,7 +66,7 @@ export function calculateTDEE(
 ): TDEEResult {
   const lean_mass_kg = body_fat_pct ? weight_kg * (1 - body_fat_pct / 100) : null;
   const bmr = lean_mass_kg
-    ? calculateKatchMcArdleBMR(lean_mass_kg)
+    ? calculateKatchMcArdleBMR(lean_mass_kg, age)
     : calculateBMR(weight_kg, height_cm, age, gender);
 
   const multiplier = ACTIVITY_MULTIPLIERS[activityLevel];
@@ -75,6 +84,7 @@ export interface SmartSuggestion {
   carbs_g: number;
   fat_g: number;
   fiber_g: number;
+  sodium_mg: number;
   bmr: number;
   tdee: number;
   lean_mass_kg: number | null;
@@ -108,7 +118,7 @@ export function generateSmartSuggestion(
     : null;
 
   const bmr = lean_mass_kg
-    ? calculateKatchMcArdleBMR(lean_mass_kg)
+    ? calculateKatchMcArdleBMR(lean_mass_kg, age)
     : calculateBMR(weight_kg, height_cm, age, gender);
 
   // If user provided a custom maintenance TDEE (e.g. from Apple Health), use that
@@ -122,24 +132,51 @@ export function generateSmartSuggestion(
   const adjustment = custom_adjustment ?? defaultAdjustments[goal];
   const calories = tdee + adjustment;
 
-  // Protein: based on lean mass if known, otherwise total weight.
-  // Slightly higher on workout days for recovery.
+  // ── Protein ───────────────────────────────────────────────────────
+  // Same every day — MPS stays elevated 24-72h post-training, so daily
+  // total matters more than per-day timing (McGlory et al., 2017).
+  // Cut: 2.3-3.1 g/kg LBM or ~2.4 g/kg total BW (Helms et al., 2014)
+  // Maintain/Bulk: 1.6-2.2 g/kg (Morton et al., 2018; Jager et al., 2017)
+  // Age 40+: +0.2 g/kg for anabolic resistance (Moore et al., 2015)
+  // Use lean mass if known (more accurate), otherwise total body weight
+  // with a lower multiplier since total BW overestimates for heavier people
   const protein_base = lean_mass_kg ?? weight_kg;
-  const protein_per_kg_rest: Record<Goal, number> = { cut: 2.2, maintain: 1.6, bulk: 1.6 };
-  const protein_per_kg_workout: Record<Goal, number> = { cut: 2.4, maintain: 2.0, bulk: 2.0 };
-  const protein_per_kg = isWorkoutDay ? protein_per_kg_workout : protein_per_kg_rest;
-  const protein_g = Math.round(protein_base * protein_per_kg[goal]);
+  const protein_per_kg: Record<Goal, number> = lean_mass_kg
+    ? { cut: 2.4, maintain: 1.8, bulk: 1.8 }   // per kg lean mass
+    : { cut: 2.2, maintain: 1.6, bulk: 1.6 };   // per kg total BW
+  const age_protein_bump = age >= 40 ? 0.2 : 0;
+  const protein_g = Math.round(protein_base * (protein_per_kg[goal] + age_protein_bump));
 
-  // Fat: workout days = lower fat, more carbs for fuel
-  //      rest days = higher fat for satiety
-  const fat_pct = isWorkoutDay
-    ? (goal === 'cut' ? 0.25 : 0.25)   // workout: 25% fat, more room for carbs
-    : (goal === 'cut' ? 0.40 : 0.35);  // rest: 35-40% fat, more satiating
-  const fat_g = Math.round((calories * fat_pct) / 9);
+  // ── Fat ─────────────────────────────────────────────────────────
+  // Based on body weight, not % of calories — body needs a minimum for
+  // hormones regardless of calorie target. Same grams both days.
+  // Cut: 0.7 g/kg, floor 0.5 men / 0.8 women (Helms 2014; Dorgan 1996)
+  // Maintain/Bulk: 1.0 g/kg (DGA 2020-2025)
+  const fat_per_kg: Record<Goal, number> = { cut: 0.7, maintain: 1.0, bulk: 1.0 };
+  const fat_floor = gender === 'female' ? 0.8 : 0.5;
+  const fat_g = Math.round(weight_kg * Math.max(fat_per_kg[goal], fat_floor));
 
-  // Carbs: whatever calories are left after protein and fat
+  // ── Carbs ───────────────────────────────────────────────────────
+  // Fill remaining calories. Naturally higher on workout days (more
+  // total calories, same protein/fat) and lower on rest days.
   const remaining_cals = calories - protein_g * 4 - fat_g * 9;
   const carbs_g = Math.max(0, Math.round(remaining_cals / 4));
+
+  // ── Sodium ──────────────────────────────────────────────────────
+  // No validated weight-based formula exists in literature.
+  // Base: 2300mg (DGA 2020-2025). Age 50+: 1500mg (AHA).
+  // Activity adds for sweat losses (ACSM/ISSN position stands).
+  // Workout adds ~500mg/session (Baker et al., 2016: 200-2000mg/hr).
+  const sodium_age_base = age >= 50 ? 1500 : 2300;
+  const sodium_activity_add: Record<ActivityLevel, number> = {
+    sedentary: 0, light: 500, moderate: 1000, active: 1500, very_active: 2000,
+  };
+  const sodium_workout_add = isWorkoutDay ? 500 : 0;
+  const sodium_mg = Math.min(4500, sodium_age_base + sodium_activity_add[activityLevel] + sodium_workout_add);
+
+  // ── Fiber ───────────────────────────────────────────────────────
+  // 14g per 1,000 kcal consumed (IOM, 2005). Floor 25g, cap 50g.
+  const fiber_g = Math.max(25, Math.min(50, Math.round(14 * (calories / 1000))));
 
   // Context-aware tips
   const tips: string[] = [];
@@ -189,7 +226,8 @@ export function generateSmartSuggestion(
     protein_g,
     carbs_g,
     fat_g,
-    fiber_g: 30,
+    fiber_g,
+    sodium_mg,
     bmr,
     tdee,
     lean_mass_kg,
@@ -225,12 +263,13 @@ export const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
 };
 
 // Labels for base daily activity (excluding workouts)
+// These describe your NON-EXERCISE daily movement only
 export const BASE_ACTIVITY_LABELS: Record<ActivityLevel, string> = {
-  sedentary: 'Sedentary (desk/classes, minimal walking)',
-  light: 'Lightly Active (some walking, light chores)',
-  moderate: 'Moderately Active (on feet most of day)',
-  active: 'Very Active (physical job, lots of walking)',
-  very_active: 'Extra Active (construction, manual labor)',
+  sedentary: 'Sedentary — mostly sitting (desk job, online classes, driving everywhere)',
+  light: 'Lightly Active — some movement (walking to classes, errands, light housework, ~4-6k steps)',
+  moderate: 'Moderately Active — moving regularly (on feet for work, walking a lot, ~7-10k steps)',
+  active: 'Very Active — physically demanding day (retail, waiter, coaching, ~10-15k steps)',
+  very_active: 'Extra Active — heavy labor all day (construction, farming, moving/lifting constantly)',
 };
 
 export const GOAL_LABELS: Record<Goal, string> = {

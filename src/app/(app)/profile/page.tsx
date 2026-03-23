@@ -125,6 +125,29 @@ export default function ProfilePage() {
     );
   }, [profile?.weight_kg, profile?.height_cm, profile?.age, profile?.activity_level, profile?.goal, profile?.gender, profile?.body_fat_pct, profile?.workout_burn, profile?.workout_deficit, profile?.custom_tdee]);
 
+  // Auto-update daily targets whenever suggestions change
+  useEffect(() => {
+    if (!suggestion || !restSuggestion || !profile) return;
+    setProfile(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        target_calories: suggestion.calories,
+        target_protein_g: suggestion.protein_g,
+        target_carbs_g: suggestion.carbs_g,
+        target_fat_g: suggestion.fat_g,
+        target_fiber_g: suggestion.fiber_g,
+        target_sodium_mg: suggestion.sodium_mg,
+        rest_target_calories: restSuggestion.calories,
+        rest_target_protein_g: restSuggestion.protein_g,
+        rest_target_carbs_g: restSuggestion.carbs_g,
+        rest_target_fat_g: restSuggestion.fat_g,
+        rest_target_fiber_g: restSuggestion.fiber_g,
+        rest_target_sodium_mg: restSuggestion.sodium_mg,
+      };
+    });
+  }, [suggestion, restSuggestion]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSaveProfile = async () => {
     if (!profile) return;
     setSaving(true);
@@ -181,6 +204,7 @@ export default function ProfilePage() {
         target_carbs_g: s.carbs_g,
         target_fat_g: s.fat_g,
         target_fiber_g: s.fiber_g,
+        target_sodium_mg: s.sodium_mg,
       });
     } else {
       setProfile({
@@ -190,6 +214,7 @@ export default function ProfilePage() {
         rest_target_carbs_g: s.carbs_g,
         rest_target_fat_g: s.fat_g,
         rest_target_fiber_g: s.fiber_g,
+        rest_target_sodium_mg: s.sodium_mg,
       });
     }
     setCustomizing(false);
@@ -205,14 +230,16 @@ export default function ProfilePage() {
       target_carbs_g: suggestion.carbs_g,
       target_fat_g: suggestion.fat_g,
       target_fiber_g: suggestion.fiber_g,
+      target_sodium_mg: suggestion.sodium_mg,
       rest_target_calories: restSuggestion.calories,
       rest_target_protein_g: restSuggestion.protein_g,
       rest_target_carbs_g: restSuggestion.carbs_g,
       rest_target_fat_g: restSuggestion.fat_g,
       rest_target_fiber_g: restSuggestion.fiber_g,
+      rest_target_sodium_mg: restSuggestion.sodium_mg,
     });
     setCustomizing(false);
-    showToast('Both training & rest day targets applied — save to keep them');
+    showToast('Both workout & rest day targets applied — save to keep them');
   };
 
   const handleLogWeight = async () => {
@@ -393,20 +420,6 @@ export default function ProfilePage() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Rest Day Deficit (kcal)</label>
-                  <input type="number" className="form-input"
-                    value={profile.rest_deficit ?? -500}
-                    onChange={e => setProfile({ ...profile, rest_deficit: parseInt(e.target.value) || 0 })}
-                    min="-1500" max="500" step="50" />
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    {(profile.rest_deficit ?? -500) < 0
-                      ? `Eating ${Math.abs(profile.rest_deficit ?? 500)} below TDEE`
-                      : (profile.rest_deficit ?? 0) > 0
-                      ? `Eating ${profile.rest_deficit} above TDEE`
-                      : 'Eating at maintenance'}
-                  </div>
-                </div>
-                <div className="form-group">
                   <label className="form-label">Workout Day Deficit (kcal)</label>
                   <input type="number" className="form-input"
                     value={profile.workout_deficit ?? -500}
@@ -417,6 +430,20 @@ export default function ProfilePage() {
                       ? `Eating ${Math.abs(profile.workout_deficit ?? 500)} below TDEE`
                       : (profile.workout_deficit ?? 0) > 0
                       ? `Eating ${profile.workout_deficit} above TDEE`
+                      : 'Eating at maintenance'}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Rest Day Deficit (kcal)</label>
+                  <input type="number" className="form-input"
+                    value={profile.rest_deficit ?? -500}
+                    onChange={e => setProfile({ ...profile, rest_deficit: parseInt(e.target.value) || 0 })}
+                    min="-1500" max="500" step="50" />
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {(profile.rest_deficit ?? -500) < 0
+                      ? `Eating ${Math.abs(profile.rest_deficit ?? 500)} below TDEE`
+                      : (profile.rest_deficit ?? 0) > 0
+                      ? `Eating ${profile.rest_deficit} above TDEE`
                       : 'Eating at maintenance'}
                   </div>
                 </div>
@@ -590,7 +617,7 @@ export default function ProfilePage() {
                             { l: 'Protein', v: s.protein_g, u: 'g', c: 'var(--color-protein)' },
                             { l: 'Carbs', v: s.carbs_g, u: 'g', c: 'var(--color-carbs)' },
                             { l: 'Fat', v: s.fat_g, u: 'g', c: 'var(--color-fat)' },
-                            { l: 'Fiber', v: s.fiber_g, u: 'g', c: 'var(--text-muted)' },
+                            { l: 'Sodium', v: s.sodium_mg, u: 'mg', c: 'var(--text-muted)' },
                           ].map(m => (
                             <div key={m.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                               <span style={{ color: 'var(--text-muted)' }}>{m.l}</span>
