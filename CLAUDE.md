@@ -96,7 +96,8 @@ Fill in missing functionality and make the app actually usable day-to-day.
 - [ ] 2.3.2 Recent foods — show last 10 logged items at top of search
 - [ ] 2.3.3 Custom food entry — add your own foods with nutrition info
 - [ ] 2.3.4 Edit/delete logged entries
-- [ ] 2.3.5 Copy meals from a previous day
+- [ ] 2.3.5 Drag and drop food items between meals — move an item from breakfast to lunch if added to the wrong meal
+- [ ] 2.3.6 Copy meals from a previous day
 - [ ] 2.3.6 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa")
 - [ ] 2.3.7 Adding a combo logs each item separately so you can remove/edit individual items after
 - [ ] 2.3.8 Combo manager — create/edit/delete combos from food log or profile page
