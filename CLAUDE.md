@@ -71,7 +71,7 @@ Get the existing app working correctly before adding anything new.
 - [x] 1.3.3 Configure `.gitattributes` so `nutritrack.db` + WAL/SHM files auto-encrypt, `nutritrack.seed.db` stays public ✅
 - [x] 1.3.4 Export git-crypt key file — save to iCloud/Drive as backup. Key at ~/Downloads/nutritrack-git-crypt-key.key ✅
 - [x] 1.3.5 Scrub personal data from git history (old commits had unencrypted DB) ✅
-- [ ] 1.3.6 App auto-creates live DB from seed on first run if no live DB exists (for new users cloning the repo)
+- [x] 1.3.6 App auto-creates live DB from seed on first run if no live DB exists (for new users cloning the repo) ✅
 
 #### 1.4 Fix Data & Display
 - [ ] 1.4.1 Verify all nutrition formulas produce sensible numbers at user's stats (100kg, cut, 2500 TDEE)

@@ -7,12 +7,18 @@ export function getDb(): Database.Database {
   if (db) return db;
 
   const dbPath = path.join(process.cwd(), 'data', 'nutritrack.db');
+  const seedPath = path.join(process.cwd(), 'data', 'nutritrack.seed.db');
 
   // Ensure data directory exists
   const fs = require('fs');
   const dir = path.dirname(dbPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
+  }
+
+  // If no live DB exists (fresh clone), copy from seed DB so food items are pre-loaded
+  if (!fs.existsSync(dbPath) && fs.existsSync(seedPath)) {
+    fs.copyFileSync(seedPath, dbPath);
   }
 
   db = new Database(dbPath);
