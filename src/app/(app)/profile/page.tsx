@@ -49,6 +49,7 @@ interface UserProfile {
   workout_burn: number;
   rest_deficit: number;
   workout_deficit: number;
+  custom_tdee: number | null;
   goal: string;
   gender: string;
   body_fat_pct: number | null;
@@ -94,7 +95,7 @@ export default function ProfilePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Rest day suggestion: base activity, no workout burn, rest deficit
+  // Rest day suggestion: base TDEE (or custom), no workout burn, rest deficit
   const restSuggestion = useMemo(() => {
     if (!profile?.weight_kg || !profile?.height_cm || !profile?.age) return null;
     return generateSmartSuggestion(
@@ -105,10 +106,11 @@ export default function ProfilePage() {
       profile.body_fat_pct,
       0,
       profile.rest_deficit ?? -500,
+      profile.custom_tdee,
     );
-  }, [profile?.weight_kg, profile?.height_cm, profile?.age, profile?.activity_level, profile?.goal, profile?.gender, profile?.body_fat_pct, profile?.rest_deficit]);
+  }, [profile?.weight_kg, profile?.height_cm, profile?.age, profile?.activity_level, profile?.goal, profile?.gender, profile?.body_fat_pct, profile?.rest_deficit, profile?.custom_tdee]);
 
-  // Workout day suggestion: base activity + workout burn, workout deficit
+  // Workout day suggestion: base TDEE (or custom) + workout burn, workout deficit
   const suggestion = useMemo(() => {
     if (!profile?.weight_kg || !profile?.height_cm || !profile?.age) return null;
     return generateSmartSuggestion(
@@ -119,8 +121,9 @@ export default function ProfilePage() {
       profile.body_fat_pct,
       profile.workout_burn ?? 400,
       profile.workout_deficit ?? -500,
+      profile.custom_tdee,
     );
-  }, [profile?.weight_kg, profile?.height_cm, profile?.age, profile?.activity_level, profile?.goal, profile?.gender, profile?.body_fat_pct, profile?.workout_burn, profile?.workout_deficit]);
+  }, [profile?.weight_kg, profile?.height_cm, profile?.age, profile?.activity_level, profile?.goal, profile?.gender, profile?.body_fat_pct, profile?.workout_burn, profile?.workout_deficit, profile?.custom_tdee]);
 
   const handleSaveProfile = async () => {
     if (!profile) return;
@@ -139,6 +142,7 @@ export default function ProfilePage() {
           workout_burn: profile.workout_burn,
           rest_deficit: profile.rest_deficit,
           workout_deficit: profile.workout_deficit,
+          custom_tdee: profile.custom_tdee,
           goal: profile.goal,
           gender: profile.gender,
           body_fat_pct: profile.body_fat_pct,
@@ -358,6 +362,25 @@ export default function ProfilePage() {
               </div>
 
               <div className="form-group">
+                <label className="form-label">Maintenance Calories (optional)</label>
+                <input type="number" className="form-input"
+                  value={profile.custom_tdee ?? ''}
+                  onChange={e => {
+                    const v = parseInt(e.target.value);
+                    setProfile({ ...profile, custom_tdee: isNaN(v) ? null : v });
+                  }}
+                  min="1000" max="6000" step="50" placeholder={
+                    restSuggestion ? `Computed: ${restSuggestion.tdee - (restSuggestion.tdee === (profile.custom_tdee ?? 0) ? 0 : 0)} — leave blank to auto-calculate` : 'e.g. 2500'
+                  } />
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                  Your daily calorie burn WITHOUT exercise. Get this from Apple Health, a fitness tracker, or leave blank to compute from BMR × activity level.
+                  {restSuggestion && !profile.custom_tdee && (
+                    <span> Currently computed: <strong>{restSuggestion.tdee} kcal</strong></span>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-group">
                 <label className="form-label">Workout Calorie Burn (per session)</label>
                 <input type="number" className="form-input"
                   value={profile.workout_burn ?? 400}
@@ -541,21 +564,23 @@ export default function ProfilePage() {
                       <div key={label} style={{ border: `1px solid ${border}`, borderRadius: 'var(--radius-sm)', padding: '14px', background: 'var(--bg-elevated)' }}>
                         <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px', color }}>{label}</div>
 
-                        {/* BMR → TDEE → Target chain */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '12px' }}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontWeight: 700, fontSize: '15px' }}>{s.bmr}</div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>BMR</div>
+                        {/* TDEE − deficit = Eat this */}
+                        <div style={{ fontSize: '12px', marginBottom: '12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid var(--border-primary)' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>TDEE (you burn)</span>
+                            <span style={{ fontWeight: 700 }}>{s.tdee} kcal</span>
                           </div>
-                          <div style={{ color: 'var(--border-primary)', display: 'flex', alignItems: 'center' }}>→</div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontWeight: 700, fontSize: '15px' }}>{s.tdee}</div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>TDEE</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid var(--border-primary)' }}>
+                            <span style={{ color: s.tdee - s.calories > 0 ? '#10b981' : '#ff8c42' }}>
+                              {s.tdee - s.calories > 0 ? 'Deficit' : s.tdee - s.calories < 0 ? 'Surplus' : 'No change'}
+                            </span>
+                            <span style={{ fontWeight: 700, color: s.tdee - s.calories > 0 ? '#10b981' : '#ff8c42' }}>
+                              {s.tdee - s.calories > 0 ? `−${s.tdee - s.calories}` : s.tdee - s.calories < 0 ? `+${Math.abs(s.tdee - s.calories)}` : '0'} kcal
+                            </span>
                           </div>
-                          <div style={{ color: 'var(--border-primary)', display: 'flex', alignItems: 'center' }}>→</div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontWeight: 700, fontSize: '15px', color }}>{s.calories}</div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>Target</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
+                            <span style={{ fontWeight: 700, color }}>You eat</span>
+                            <span style={{ fontWeight: 800, fontSize: '16px', color }}>{s.calories} kcal</span>
                           </div>
                         </div>
 

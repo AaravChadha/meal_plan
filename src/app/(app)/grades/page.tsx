@@ -17,12 +17,21 @@ interface Profile {
   goal: string;
   gender: string;
   body_fat_pct: number | null;
+  workout_burn: number;
+  rest_deficit: number;
+  workout_deficit: number;
   target_calories: number;
   target_protein_g: number;
   target_carbs_g: number;
   target_fat_g: number;
   target_fiber_g: number;
   target_sodium_mg: number;
+  rest_target_calories: number;
+  rest_target_protein_g: number;
+  rest_target_carbs_g: number;
+  rest_target_fat_g: number;
+  rest_target_fiber_g: number;
+  rest_target_sodium_mg: number;
 }
 
 // ── Small reusable grade badge ────────────────────────────────────────
@@ -247,6 +256,133 @@ function CalibrationCard({ report, goal, suggestion, customCalories }: {
   );
 }
 
+// ── Workout vs Rest comparison table ─────────────────────────────────
+function ComparisonTable({ profile }: { profile: Profile }) {
+  const rows = [
+    { label: 'Calories', workout: profile.target_calories, rest: profile.rest_target_calories, unit: 'kcal', color: 'var(--color-calories)' },
+    { label: 'Protein', workout: profile.target_protein_g, rest: profile.rest_target_protein_g, unit: 'g', color: 'var(--color-protein)' },
+    { label: 'Carbs', workout: profile.target_carbs_g, rest: profile.rest_target_carbs_g, unit: 'g', color: 'var(--color-carbs)' },
+    { label: 'Fat', workout: profile.target_fat_g, rest: profile.rest_target_fat_g, unit: 'g', color: 'var(--color-fat)' },
+    { label: 'Fiber', workout: profile.target_fiber_g, rest: profile.rest_target_fiber_g, unit: 'g', color: 'var(--text-muted)' },
+  ];
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <div className="card-title">Workout vs Rest Day Targets</div>
+        <div className="card-subtitle">What you should eat on each type of day</div>
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+        gap: '1px', background: 'var(--border-primary)',
+        border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)',
+        overflow: 'hidden',
+      }}>
+        {/* Header row */}
+        {['Macro', '🏋️ Workout', '😴 Rest'].map(h => (
+          <div key={h} style={{
+            background: 'var(--bg-elevated)', padding: '10px 14px',
+            fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)',
+            textAlign: h === 'Macro' ? 'left' : 'center',
+          }}>{h}</div>
+        ))}
+
+        {/* Data rows */}
+        {rows.map(r => (
+          [
+            <div key={`${r.label}-label`} style={{ background: 'var(--bg-card)', padding: '10px 14px', fontSize: '13px', fontWeight: 600, color: r.color }}>{r.label}</div>,
+            <div key={`${r.label}-workout`} style={{ background: 'var(--bg-card)', padding: '10px 14px', textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>
+              {r.workout}<span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}> {r.unit}</span>
+            </div>,
+            <div key={`${r.label}-rest`} style={{ background: 'var(--bg-card)', padding: '10px 14px', textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>
+              {r.rest}<span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}> {r.unit}</span>
+            </div>,
+          ]
+        ))}
+      </div>
+
+      <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+        Workout days have more carbs for fuel and recovery. Rest days lower carbs and fat since you burn fewer calories.
+        Grades are based on whichever targets match your day type.
+      </div>
+    </div>
+  );
+}
+
+// ── Grading rubric ──────────────────────────────────────────────────
+function GradingRubric({ goal }: { goal: string }) {
+  const rubric = [
+    { grade: 'A+' as LetterGrade, range: '97-100', desc: 'All macros hit target range' },
+    { grade: 'A' as LetterGrade, range: '93-96', desc: 'Nearly perfect — one macro slightly off' },
+    { grade: 'A-' as LetterGrade, range: '90-92', desc: 'Great day — minor misses' },
+    { grade: 'B+' as LetterGrade, range: '87-89', desc: 'Most macros on target' },
+    { grade: 'B' as LetterGrade, range: '83-86', desc: 'Good effort — room to improve' },
+    { grade: 'B-' as LetterGrade, range: '80-82', desc: 'Decent — a couple macros off' },
+    { grade: 'C+' as LetterGrade, range: '77-79', desc: 'Some targets missed' },
+    { grade: 'C' as LetterGrade, range: '73-76', desc: 'Multiple targets off' },
+    { grade: 'C-' as LetterGrade, range: '70-72', desc: 'Below average adherence' },
+    { grade: 'D' as LetterGrade, range: '60-69', desc: 'Significantly off targets' },
+    { grade: 'F' as LetterGrade, range: '<60', desc: 'Most targets missed or no data' },
+  ];
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <div className="card-title">How Grades Work</div>
+      </div>
+
+      {/* Weight breakdown */}
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px', color: 'var(--text-secondary)' }}>Score Weights</div>
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {[
+            { label: 'Calories', weight: '25%' },
+            { label: 'Protein', weight: '25%' },
+            { label: 'Fiber', weight: '15%' },
+            { label: 'Sodium', weight: '15%' },
+            { label: 'Carbs', weight: '10%' },
+            { label: 'Fat', weight: '10%' },
+          ].map(w => (
+            <span key={w.label} style={{
+              padding: '4px 10px', borderRadius: '12px', fontSize: '11px',
+              background: 'var(--bg-elevated)', color: 'var(--text-secondary)',
+            }}>
+              {w.label} <span style={{ fontWeight: 700 }}>{w.weight}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Calorie bias note */}
+      <div style={{
+        padding: '8px 12px', marginBottom: '16px',
+        background: 'rgba(99,102,241,0.08)', borderRadius: 'var(--radius-sm)',
+        fontSize: '12px', color: 'var(--accent-indigo)',
+      }}>
+        {goal === 'cut'
+          ? 'On a cut: being slightly under your calorie target is graded better than going over — the deficit is the goal.'
+          : goal === 'bulk'
+          ? 'On a bulk: hitting or slightly exceeding calories is graded better than falling short.'
+          : 'Calories are graded symmetrically — aim to stay within 10% of target.'}
+      </div>
+
+      {/* Grade scale */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto auto 1fr', gap: '1px', fontSize: '12px' }}>
+        {rubric.map(r => (
+          <div key={r.grade} style={{ display: 'contents' }}>
+            <div style={{ padding: '5px 8px', display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontWeight: 800, color: GRADE_COLORS[r.grade], fontSize: '13px', width: '24px' }}>{r.grade}</span>
+            </div>
+            <div style={{ padding: '5px 8px', color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '11px' }}>{r.range}</div>
+            <div style={{ padding: '5px 8px', color: 'var(--text-secondary)' }}>{r.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────
 export default function GradesPage() {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -280,22 +416,25 @@ export default function GradesPage() {
         const weekRes = await fetch(`/api/summary?start=${start}&end=${endDate}`);
         const weekData = await weekRes.json();
 
-        const targets = {
-          calories: p.target_calories,
-          protein_g: p.target_protein_g,
-          carbs_g: p.target_carbs_g,
-          fat_g: p.target_fat_g,
-          fiber_g: p.target_fiber_g,
-          sodium_mg: p.target_sodium_mg,
-        };
-
+        // Use targets from today's summary (day-type-aware: rest vs workout)
         if (todayData.success) {
-          setTodayGrade(gradeDay({ ...todayData.data, date }, targets));
+          const dayTargets = todayData.data.targets ?? {
+            calories: p.target_calories, protein_g: p.target_protein_g,
+            carbs_g: p.target_carbs_g, fat_g: p.target_fat_g,
+            fiber_g: p.target_fiber_g, sodium_mg: p.target_sodium_mg,
+          };
+          setTodayGrade(gradeDay({ ...todayData.data, date }, dayTargets, p.goal));
         }
 
+        // For weekly history, use workout targets as default (range query doesn't include per-day targets)
+        const defaultTargets = {
+          calories: p.target_calories, protein_g: p.target_protein_g,
+          carbs_g: p.target_carbs_g, fat_g: p.target_fat_g,
+          fiber_g: p.target_fiber_g, sodium_mg: p.target_sodium_mg,
+        };
         if (weekData.success) {
           setWeekGrades(weekData.data.map((d: Record<string, number>) =>
-            gradeDay(d, targets)
+            gradeDay(d, defaultTargets, p.goal)
           ));
         }
 
@@ -329,27 +468,33 @@ export default function GradesPage() {
         {loading ? (
           <div className="card"><div className="loading-shimmer" style={{ height: 300 }} /></div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-            {/* Left: today + history */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {todayGrade && <OverallGradeCard dayGrade={todayGrade} />}
-              <WeekHistory grades={weekGrades} />
-            </div>
+          <>
+            {/* Comparison table — full width */}
+            {profile && <ComparisonTable profile={profile} />}
 
-            {/* Right: calibration */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {calibration && profile && suggestion ? (
-                <CalibrationCard report={calibration} goal={profile.goal} suggestion={suggestion} customCalories={profile.target_calories} />
-              ) : (
-                <div className="card">
-                  <div className="card-header"><div className="card-title">Target Calibration</div></div>
-                  <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
-                    Fill in your age, weight, and height on the Profile page to see how your targets compare to recommendations.
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
+              {/* Left: today + history */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {todayGrade && <OverallGradeCard dayGrade={todayGrade} />}
+                <WeekHistory grades={weekGrades} />
+              </div>
+
+              {/* Right: calibration + rubric */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {calibration && profile && suggestion ? (
+                  <CalibrationCard report={calibration} goal={profile.goal} suggestion={suggestion} customCalories={profile.target_calories} />
+                ) : (
+                  <div className="card">
+                    <div className="card-header"><div className="card-title">Target Calibration</div></div>
+                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      Fill in your age, weight, and height on the Profile page to see how your targets compare to recommendations.
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+                {profile && <GradingRubric goal={profile.goal} />}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </>

@@ -34,7 +34,7 @@ export async function PUT(request: NextRequest) {
     const allowedFields = [
       'name', 'age', 'weight_kg', 'height_cm', 'activity_level', 'goal',
       'gender', 'body_fat_pct', 'rest_activity_level', 'workout_burn',
-      'rest_deficit', 'workout_deficit',
+      'rest_deficit', 'workout_deficit', 'custom_tdee',
       'target_calories', 'target_protein_g', 'target_carbs_g', 'target_fat_g',
       'target_fiber_g', 'target_sodium_mg',
       'rest_target_calories', 'rest_target_protein_g', 'rest_target_carbs_g',

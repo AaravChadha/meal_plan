@@ -129,6 +129,7 @@ function initTables(db: Database.Database) {
   try { db.exec('ALTER TABLE users ADD COLUMN workout_burn INTEGER NOT NULL DEFAULT 400'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN rest_deficit INTEGER NOT NULL DEFAULT -500'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN workout_deficit INTEGER NOT NULL DEFAULT -500'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN custom_tdee INTEGER'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN rest_target_calories REAL NOT NULL DEFAULT 2000'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN rest_target_protein_g REAL NOT NULL DEFAULT 150'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN rest_target_carbs_g REAL NOT NULL DEFAULT 250'); } catch {}

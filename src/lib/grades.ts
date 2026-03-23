@@ -85,11 +85,35 @@ function scoreHitNutrient(current: number, target: number): number {
 }
 
 // ── Score calories ─────────────────────────────────────────────────────
-// You want to be close to target in both directions (not too far under or over)
-function scoreCalories(current: number, target: number): number {
+// On a cut: slightly under is BETTER than slightly over (deficit is the goal)
+// On a bulk: slightly over is better than under
+// On maintain: symmetric
+function scoreCalories(current: number, target: number, goal: string = 'maintain'): number {
   if (target === 0) return 100;
   const pct = (current / target) * 100;
-  if (pct >= 90 && pct <= 110) return 100;  // perfect window
+
+  if (goal === 'cut') {
+    // Cutting: under target is fine, over is penalized more
+    if (pct >= 90 && pct <= 105) return 100;  // slightly under = perfect
+    if (pct >= 80 && pct <= 100) return 95;   // under is still great
+    if (pct > 105 && pct <= 110) return 82;   // slightly over — not ideal
+    if (pct >= 70 && pct <= 80) return 85;    // more under, still decent
+    if (pct > 110 && pct <= 120) return 72;   // over — worse
+    if (pct >= 60) return 65;
+    return 30;
+  }
+
+  if (goal === 'bulk') {
+    // Bulking: over target is fine, under is penalized more
+    if (pct >= 95 && pct <= 115) return 100;
+    if (pct >= 100 && pct <= 120) return 95;
+    if (pct >= 85 && pct < 95) return 82;
+    if (pct >= 80 || pct <= 130) return 72;
+    return 30;
+  }
+
+  // Maintain: symmetric
+  if (pct >= 90 && pct <= 110) return 100;
   if (pct >= 80 && pct <= 120) return 82;
   if (pct >= 70 && pct <= 130) return 72;
   if (pct >= 60 && pct <= 140) return 62;
@@ -138,6 +162,7 @@ function feedbackLimit(label: string, current: number, target: number, unit: str
 export function gradeDay(
   summary: Record<string, number>,
   targets: Record<string, number>,
+  goal: string = 'maintain',
 ): DayGrade {
   const date = (summary.date as unknown as string) ?? '';
   const logged_anything = summary.total_calories > 0;
@@ -150,7 +175,7 @@ export function gradeDay(
       target: Math.round(targets.calories ?? 2000),
       unit: 'kcal',
       isLimitType: false,
-      score: scoreCalories(summary.total_calories ?? 0, targets.calories ?? 2000),
+      score: scoreCalories(summary.total_calories ?? 0, targets.calories ?? 2000, goal),
       grade: 'A',
       feedback: feedbackCalories(summary.total_calories ?? 0, targets.calories ?? 2000),
     },

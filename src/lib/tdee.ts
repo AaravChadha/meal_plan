@@ -97,7 +97,9 @@ export function generateSmartSuggestion(
   body_fat_pct?: number | null,
   extra_burn: number = 0,
   custom_adjustment?: number,
+  custom_tdee?: number | null,
 ): SmartSuggestion {
+  const isWorkoutDay = extra_burn > 0;
   const lean_mass_kg = body_fat_pct
     ? Math.round(weight_kg * (1 - body_fat_pct / 100) * 10) / 10
     : null;
@@ -109,21 +111,30 @@ export function generateSmartSuggestion(
     ? calculateKatchMcArdleBMR(lean_mass_kg)
     : calculateBMR(weight_kg, height_cm, age, gender);
 
+  // If user provided a custom maintenance TDEE (e.g. from Apple Health), use that
+  // instead of computing from BMR × activity multiplier
   const multiplier = ACTIVITY_MULTIPLIERS[activityLevel];
-  const tdee = Math.round(bmr * multiplier) + extra_burn;
+  const computed_tdee = Math.round(bmr * multiplier);
+  const base_tdee = custom_tdee ?? computed_tdee;
+  const tdee = base_tdee + extra_burn;
 
   const defaultAdjustments: Record<Goal, number> = { cut: -500, maintain: 0, bulk: 250 };
   const adjustment = custom_adjustment ?? defaultAdjustments[goal];
   const calories = tdee + adjustment;
 
   // Protein: based on lean mass if known, otherwise total weight.
-  // Higher on cut to preserve muscle, slightly lower on bulk.
+  // Slightly higher on workout days for recovery.
   const protein_base = lean_mass_kg ?? weight_kg;
-  const protein_per_kg: Record<Goal, number> = { cut: 2.3, maintain: 1.8, bulk: 1.8 };
+  const protein_per_kg_rest: Record<Goal, number> = { cut: 2.2, maintain: 1.6, bulk: 1.6 };
+  const protein_per_kg_workout: Record<Goal, number> = { cut: 2.4, maintain: 2.0, bulk: 2.0 };
+  const protein_per_kg = isWorkoutDay ? protein_per_kg_workout : protein_per_kg_rest;
   const protein_g = Math.round(protein_base * protein_per_kg[goal]);
 
-  // Fat: 30% of calories on bulk/maintain, 35% on cut (fat is satiating on a deficit)
-  const fat_pct = goal === 'cut' ? 0.35 : 0.30;
+  // Fat: workout days = lower fat, more carbs for fuel
+  //      rest days = higher fat for satiety
+  const fat_pct = isWorkoutDay
+    ? (goal === 'cut' ? 0.25 : 0.25)   // workout: 25% fat, more room for carbs
+    : (goal === 'cut' ? 0.40 : 0.35);  // rest: 35-40% fat, more satiating
   const fat_g = Math.round((calories * fat_pct) / 9);
 
   // Carbs: whatever calories are left after protein and fat
@@ -160,10 +171,17 @@ export function generateSmartSuggestion(
     tips.push('Enter your body fat % for more accurate protein targets and personalized advice.');
   }
 
+  // Dynamic rate message based on actual adjustment
+  const weeklyKg = Math.abs(adjustment) * 7 / 7700;
+  const rateStr = weeklyKg.toFixed(2);
   const rate_messages: Record<Goal, string> = {
-    cut: 'At a 500 cal deficit, expect to lose ~0.45 kg (1 lb) per week.',
-    bulk: 'At a 250 cal surplus, expect to gain ~0.2 kg/week, mostly muscle.',
-    maintain: 'Eating at your TDEE will maintain your current weight.',
+    cut: `At a ${Math.abs(adjustment)} cal deficit, expect to lose ~${rateStr} kg (~${(weeklyKg * 2.2).toFixed(1)} lb) per week.`,
+    bulk: `At a ${Math.abs(adjustment)} cal surplus, expect to gain ~${rateStr} kg/week, mostly muscle.`,
+    maintain: adjustment === 0
+      ? 'Eating at your TDEE will maintain your current weight.'
+      : adjustment < 0
+      ? `At a ${Math.abs(adjustment)} cal deficit, expect to lose ~${rateStr} kg/week.`
+      : `At a ${adjustment} cal surplus, expect to gain ~${rateStr} kg/week.`,
   };
 
   return {
