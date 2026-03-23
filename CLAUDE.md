@@ -65,10 +65,18 @@ Get the existing app working correctly before adding anything new.
 - [x] 1.2.4 Fix profile black screen on invalid session (redirect to /login on any 401) ✅
 - [ ] 1.2.5 All API-fetching pages should handle 401 with redirect (not just profile) — grades, food log, analytics still missing
 
-#### 1.3 Fix Data & Display
-- [ ] 1.3.1 Verify all nutrition formulas produce sensible numbers at user's stats (100kg, cut, 2500 TDEE)
-- [ ] 1.3.2 Ensure Purdue dining items display properly in food search with "Purdue Dining" badge
-- [ ] 1.3.3 Test food log → summary → grades pipeline end-to-end
+#### 1.3 Security & Backup
+- [x] 1.3.1 Create a clean template DB (`data/nutritrack.seed.db`) with only Purdue foods + common foods, no user data ✅
+- [x] 1.3.2 Set up git-crypt — encrypt live DB (`data/nutritrack.db`) so it's committed but unreadable on GitHub (AES-256) ✅
+- [x] 1.3.3 Configure `.gitattributes` so `nutritrack.db` + WAL/SHM files auto-encrypt, `nutritrack.seed.db` stays public ✅
+- [x] 1.3.4 Export git-crypt key file — save to iCloud/Drive as backup. Key at ~/Downloads/nutritrack-git-crypt-key.key ✅
+- [x] 1.3.5 Scrub personal data from git history (old commits had unencrypted DB) ✅
+- [ ] 1.3.6 App auto-creates live DB from seed on first run if no live DB exists (for new users cloning the repo)
+
+#### 1.4 Fix Data & Display
+- [ ] 1.4.1 Verify all nutrition formulas produce sensible numbers at user's stats (100kg, cut, 2500 TDEE)
+- [ ] 1.4.2 Ensure Purdue dining items display properly in food search with "Purdue Dining" badge
+- [ ] 1.4.3 Test food log → summary → grades pipeline end-to-end
 
 ---
 
@@ -145,8 +153,11 @@ Fill in missing functionality and make the app actually usable day-to-day.
 - [ ] 2.10.3 Explain what each field means as they fill it in (educational tooltips)
 
 #### 2.11 Data & Export
-- [ ] 2.11.1 Export food log, weight history, grades as CSV
-- [ ] 2.11.2 Shows you care about user data ownership (good for portfolio)
+- [ ] 2.11.1 Backup API — export all user data (profile, custom foods, combos, baselines, food log, weight history) as JSON
+- [ ] 2.11.2 Restore API — import a backup JSON to rebuild account and all personal data
+- [ ] 2.11.3 Backup/restore UI on profile page — "Download Backup" + "Restore from Backup"
+- [ ] 2.11.4 Export food log, weight history, grades as CSV
+- [ ] 2.11.5 Shows you care about user data ownership (good for portfolio)
 
 #### 2.12 Polish & UX
 - [ ] 2.12.1 Loading states for all pages (skeleton screens, not blank)

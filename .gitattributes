@@ -1,0 +1,7 @@
+# Encrypt the live database (contains personal user data)
+data/nutritrack.db filter=git-crypt diff=git-crypt
+data/nutritrack.db-shm filter=git-crypt diff=git-crypt
+data/nutritrack.db-wal filter=git-crypt diff=git-crypt
+
+# Seed database stays PUBLIC (just food items, no personal data)
+# data/nutritrack.seed.db is NOT encrypted
