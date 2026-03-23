@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
-import { generateSmartSuggestion, ACTIVITY_LABELS, GOAL_LABELS, ActivityLevel, Goal, Gender } from '@/lib/tdee';
+import { generateSmartSuggestion, BASE_ACTIVITY_LABELS, GOAL_LABELS, ActivityLevel, Goal, Gender } from '@/lib/tdee';
 
 // ── Small inline unit toggle button ────────────────────────────────
 function UnitToggle({ options, value, onChange }: {
@@ -45,6 +45,10 @@ interface UserProfile {
   weight_kg: number | null;
   height_cm: number | null;
   activity_level: string;
+  rest_activity_level: string;
+  workout_burn: number;
+  rest_deficit: number;
+  workout_deficit: number;
   goal: string;
   gender: string;
   body_fat_pct: number | null;
@@ -54,6 +58,12 @@ interface UserProfile {
   target_fat_g: number;
   target_fiber_g: number;
   target_sodium_mg: number;
+  rest_target_calories: number;
+  rest_target_protein_g: number;
+  rest_target_carbs_g: number;
+  rest_target_fat_g: number;
+  rest_target_fiber_g: number;
+  rest_target_sodium_mg: number;
 }
 
 export default function ProfilePage() {
@@ -76,24 +86,41 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetch('/api/profile')
-      .then(r => r.json())
-      .then(data => { if (data.success) setProfile(data.data); })
+      .then(r => {
+        if (r.status === 401) { window.location.href = '/login'; return null; }
+        return r.json();
+      })
+      .then(data => { if (data?.success) setProfile(data.data); })
       .finally(() => setLoading(false));
   }, []);
 
-  // Compute smart suggestion whenever relevant fields change
-  const suggestion = useMemo(() => {
+  // Rest day suggestion: base activity, no workout burn, rest deficit
+  const restSuggestion = useMemo(() => {
     if (!profile?.weight_kg || !profile?.height_cm || !profile?.age) return null;
     return generateSmartSuggestion(
-      profile.weight_kg,
-      profile.height_cm,
-      profile.age,
+      profile.weight_kg, profile.height_cm, profile.age,
       profile.activity_level as ActivityLevel,
       profile.goal as Goal,
       (profile.gender || 'neutral') as Gender,
       profile.body_fat_pct,
+      0,
+      profile.rest_deficit ?? -500,
     );
-  }, [profile?.weight_kg, profile?.height_cm, profile?.age, profile?.activity_level, profile?.goal, profile?.gender, profile?.body_fat_pct]);
+  }, [profile?.weight_kg, profile?.height_cm, profile?.age, profile?.activity_level, profile?.goal, profile?.gender, profile?.body_fat_pct, profile?.rest_deficit]);
+
+  // Workout day suggestion: base activity + workout burn, workout deficit
+  const suggestion = useMemo(() => {
+    if (!profile?.weight_kg || !profile?.height_cm || !profile?.age) return null;
+    return generateSmartSuggestion(
+      profile.weight_kg, profile.height_cm, profile.age,
+      profile.activity_level as ActivityLevel,
+      profile.goal as Goal,
+      (profile.gender || 'neutral') as Gender,
+      profile.body_fat_pct,
+      profile.workout_burn ?? 400,
+      profile.workout_deficit ?? -500,
+    );
+  }, [profile?.weight_kg, profile?.height_cm, profile?.age, profile?.activity_level, profile?.goal, profile?.gender, profile?.body_fat_pct, profile?.workout_burn, profile?.workout_deficit]);
 
   const handleSaveProfile = async () => {
     if (!profile) return;
@@ -108,6 +135,10 @@ export default function ProfilePage() {
           weight_kg: profile.weight_kg,
           height_cm: profile.height_cm,
           activity_level: profile.activity_level,
+          rest_activity_level: profile.rest_activity_level,
+          workout_burn: profile.workout_burn,
+          rest_deficit: profile.rest_deficit,
+          workout_deficit: profile.workout_deficit,
           goal: profile.goal,
           gender: profile.gender,
           body_fat_pct: profile.body_fat_pct,
@@ -117,6 +148,12 @@ export default function ProfilePage() {
           target_fat_g: profile.target_fat_g,
           target_fiber_g: profile.target_fiber_g,
           target_sodium_mg: profile.target_sodium_mg,
+          rest_target_calories: profile.rest_target_calories,
+          rest_target_protein_g: profile.rest_target_protein_g,
+          rest_target_carbs_g: profile.rest_target_carbs_g,
+          rest_target_fat_g: profile.rest_target_fat_g,
+          rest_target_fiber_g: profile.rest_target_fiber_g,
+          rest_target_sodium_mg: profile.rest_target_sodium_mg,
         }),
       });
       const data = await res.json();
@@ -129,8 +166,34 @@ export default function ProfilePage() {
     }
   };
 
-  const handleApplySuggestion = () => {
-    if (!suggestion || !profile) return;
+  const handleApplySuggestion = (type: 'training' | 'rest') => {
+    const s = type === 'training' ? suggestion : restSuggestion;
+    if (!s || !profile) return;
+    if (type === 'training') {
+      setProfile({
+        ...profile,
+        target_calories: s.calories,
+        target_protein_g: s.protein_g,
+        target_carbs_g: s.carbs_g,
+        target_fat_g: s.fat_g,
+        target_fiber_g: s.fiber_g,
+      });
+    } else {
+      setProfile({
+        ...profile,
+        rest_target_calories: s.calories,
+        rest_target_protein_g: s.protein_g,
+        rest_target_carbs_g: s.carbs_g,
+        rest_target_fat_g: s.fat_g,
+        rest_target_fiber_g: s.fiber_g,
+      });
+    }
+    setCustomizing(false);
+    showToast(`${type === 'training' ? 'Workout' : 'Rest'} day targets applied — save to keep them`);
+  };
+
+  const handleApplyBoth = () => {
+    if (!suggestion || !restSuggestion || !profile) return;
     setProfile({
       ...profile,
       target_calories: suggestion.calories,
@@ -138,9 +201,14 @@ export default function ProfilePage() {
       target_carbs_g: suggestion.carbs_g,
       target_fat_g: suggestion.fat_g,
       target_fiber_g: suggestion.fiber_g,
+      rest_target_calories: restSuggestion.calories,
+      rest_target_protein_g: restSuggestion.protein_g,
+      rest_target_carbs_g: restSuggestion.carbs_g,
+      rest_target_fat_g: restSuggestion.fat_g,
+      rest_target_fiber_g: restSuggestion.fiber_g,
     });
     setCustomizing(false);
-    showToast('Recommended targets applied — save to keep them');
+    showToast('Both training & rest day targets applied — save to keep them');
   };
 
   const handleLogWeight = async () => {
@@ -274,18 +342,60 @@ export default function ProfilePage() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Activity Level</label>
-                  <select className="form-select" value={profile.activity_level}
-                    onChange={e => setProfile({ ...profile, activity_level: e.target.value })}>
-                    {Object.entries(ACTIVITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
                   <label className="form-label">Goal</label>
                   <select className="form-select" value={profile.goal}
                     onChange={e => setProfile({ ...profile, goal: e.target.value })}>
                     {Object.entries(GOAL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Daily Activity (without workouts)</label>
+                  <select className="form-select" value={profile.activity_level}
+                    onChange={e => setProfile({ ...profile, activity_level: e.target.value })}>
+                    {Object.entries(BASE_ACTIVITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Workout Calorie Burn (per session)</label>
+                <input type="number" className="form-input"
+                  value={profile.workout_burn ?? 400}
+                  onChange={e => setProfile({ ...profile, workout_burn: parseInt(e.target.value) || 0 })}
+                  min="0" max="1500" step="50" placeholder="e.g. 400" />
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                  Estimated calories burned during a workout. Check your watch or use ~300 light, ~400 moderate, ~600 intense.
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Rest Day Deficit (kcal)</label>
+                  <input type="number" className="form-input"
+                    value={profile.rest_deficit ?? -500}
+                    onChange={e => setProfile({ ...profile, rest_deficit: parseInt(e.target.value) || 0 })}
+                    min="-1500" max="500" step="50" />
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {(profile.rest_deficit ?? -500) < 0
+                      ? `Eating ${Math.abs(profile.rest_deficit ?? 500)} below TDEE`
+                      : (profile.rest_deficit ?? 0) > 0
+                      ? `Eating ${profile.rest_deficit} above TDEE`
+                      : 'Eating at maintenance'}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Workout Day Deficit (kcal)</label>
+                  <input type="number" className="form-input"
+                    value={profile.workout_deficit ?? -500}
+                    onChange={e => setProfile({ ...profile, workout_deficit: parseInt(e.target.value) || 0 })}
+                    min="-1500" max="500" step="50" />
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {(profile.workout_deficit ?? -500) < 0
+                      ? `Eating ${Math.abs(profile.workout_deficit ?? 500)} below TDEE`
+                      : (profile.workout_deficit ?? 0) > 0
+                      ? `Eating ${profile.workout_deficit} above TDEE`
+                      : 'Eating at maintenance'}
+                  </div>
                 </div>
               </div>
 
@@ -314,6 +424,19 @@ export default function ProfilePage() {
                   Estimate using a DEXA scan, calipers, or an online calculator.
                 </div>
               </div>
+
+              {/* BMR display */}
+              {restSuggestion && (
+                <div style={{ padding: '14px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600 }}>Basal Metabolic Rate (BMR)</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Calories your body burns at complete rest</div>
+                  </div>
+                  <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-calories)' }}>
+                    {restSuggestion.bmr} <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-muted)' }}>kcal</span>
+                  </div>
+                </div>
+              )}
 
               {/* Lean / Fat mass breakdown */}
               {profile.weight_kg && profile.body_fat_pct && leanMass && fatMass ? (
@@ -390,13 +513,15 @@ export default function ProfilePage() {
           {/* ── RIGHT COLUMN ─────────────────────────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-            {/* Smart Suggestions */}
+            {/* Smart Recommendations — side-by-side Training vs Rest */}
             <div className="card">
               <div className="card-header">
                 <div>
                   <div className="card-title">Smart Recommendations</div>
                   <div className="card-subtitle">
-                    {canGenerateSuggestion ? `Based on your stats for: ${GOAL_LABELS[profile.goal as Goal]}` : 'Fill in age, weight & height to get recommendations'}
+                    {canGenerateSuggestion
+                      ? `Training vs rest day targets for: ${GOAL_LABELS[profile.goal as Goal]}`
+                      : 'Fill in age, weight & height to get recommendations'}
                   </div>
                 </div>
               </div>
@@ -405,39 +530,69 @@ export default function ProfilePage() {
                 <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
                   Add your age, weight, and height on the left to see personalized recommendations.
                 </div>
-              ) : suggestion ? (
+              ) : suggestion && restSuggestion ? (
                 <>
-                  {/* TDEE breakdown */}
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', marginBottom: '20px', textAlign: 'center', fontSize: '13px' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '18px' }}>{suggestion.bmr}</div>
-                      <div style={{ color: 'var(--text-muted)' }}>BMR</div>
-                    </div>
-                    <div style={{ color: 'var(--border-primary)', display: 'flex', alignItems: 'center' }}>→</div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '18px' }}>{suggestion.tdee}</div>
-                      <div style={{ color: 'var(--text-muted)' }}>TDEE</div>
-                    </div>
-                    <div style={{ color: 'var(--border-primary)', display: 'flex', alignItems: 'center' }}>→</div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '18px', color: 'var(--accent-indigo)' }}>{suggestion.calories}</div>
-                      <div style={{ color: 'var(--text-muted)' }}>Target</div>
-                    </div>
-                  </div>
-
-                  {/* Macro targets */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '20px', textAlign: 'center' }}>
+                  {/* Side-by-side TDEE cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                     {[
-                      { label: 'Calories', value: suggestion.calories, unit: 'kcal', color: 'var(--color-calories)' },
-                      { label: 'Protein', value: suggestion.protein_g, unit: 'g', color: 'var(--color-protein)' },
-                      { label: 'Carbs', value: suggestion.carbs_g, unit: 'g', color: 'var(--color-carbs)' },
-                      { label: 'Fat', value: suggestion.fat_g, unit: 'g', color: 'var(--color-fat)' },
-                    ].map(m => (
-                      <div key={m.label} style={{ padding: '12px 8px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
-                        <div style={{ fontWeight: 700, fontSize: '18px', color: m.color }}>{m.value}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{m.unit} {m.label}</div>
+                      { label: `🏋️ Workout Day (+${profile.workout_burn ?? 400} cal)`, s: suggestion, color: 'var(--accent-indigo)', border: 'rgba(99,102,241,0.3)' },
+                      { label: '😴 Rest Day (no workout)', s: restSuggestion, color: '#8b5cf6', border: 'rgba(139,92,246,0.3)' },
+                    ].map(({ label, s, color, border }) => (
+                      <div key={label} style={{ border: `1px solid ${border}`, borderRadius: 'var(--radius-sm)', padding: '14px', background: 'var(--bg-elevated)' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px', color }}>{label}</div>
+
+                        {/* BMR → TDEE → Target chain */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '12px' }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontWeight: 700, fontSize: '15px' }}>{s.bmr}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>BMR</div>
+                          </div>
+                          <div style={{ color: 'var(--border-primary)', display: 'flex', alignItems: 'center' }}>→</div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontWeight: 700, fontSize: '15px' }}>{s.tdee}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>TDEE</div>
+                          </div>
+                          <div style={{ color: 'var(--border-primary)', display: 'flex', alignItems: 'center' }}>→</div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontWeight: 700, fontSize: '15px', color }}>{s.calories}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>Target</div>
+                          </div>
+                        </div>
+
+                        {/* Macro grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '12px' }}>
+                          {[
+                            { l: 'Protein', v: s.protein_g, u: 'g', c: 'var(--color-protein)' },
+                            { l: 'Carbs', v: s.carbs_g, u: 'g', c: 'var(--color-carbs)' },
+                            { l: 'Fat', v: s.fat_g, u: 'g', c: 'var(--color-fat)' },
+                            { l: 'Fiber', v: s.fiber_g, u: 'g', c: 'var(--text-muted)' },
+                          ].map(m => (
+                            <div key={m.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>{m.l}</span>
+                              <span style={{ fontWeight: 600, color: m.c }}>{m.v}{m.u}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Deficit info */}
+                        <div style={{ marginTop: '8px', padding: '6px 8px', background: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', fontSize: '11px', color: 'var(--text-muted)' }}>
+                          {s.tdee - s.calories > 0
+                            ? `${s.tdee - s.calories} kcal deficit`
+                            : s.tdee - s.calories < 0
+                            ? `${Math.abs(s.tdee - s.calories)} kcal surplus`
+                            : 'At maintenance'}
+                        </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Calorie difference between days */}
+                  <div style={{
+                    padding: '10px 14px', marginBottom: '12px',
+                    background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
+                    borderRadius: 'var(--radius-sm)', fontSize: '12px', color: 'var(--accent-indigo)',
+                  }}>
+                    Workout days: {suggestion.calories} kcal · Rest days: {restSuggestion.calories} kcal · Difference: {suggestion.calories - restSuggestion.calories} kcal/day
                   </div>
 
                   {/* Rate message */}
@@ -445,7 +600,7 @@ export default function ProfilePage() {
                     {suggestion.rate_message}
                   </div>
 
-                  {/* Contextual tips */}
+                  {/* Tips */}
                   {suggestion.tips.map((tip, i) => (
                     <div key={i} style={{ padding: '10px 14px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
                       💡 {tip}
@@ -454,8 +609,8 @@ export default function ProfilePage() {
 
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                    <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={handleApplySuggestion}>
-                      Apply These Targets
+                    <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={handleApplyBoth}>
+                      Apply Both Targets
                     </button>
                     <button className="btn btn-secondary" onClick={() => setCustomizing(c => !c)}>
                       {customizing ? 'Hide' : 'Customize'}
@@ -465,75 +620,119 @@ export default function ProfilePage() {
               ) : null}
             </div>
 
-            {/* Daily Targets — shown always or when customizing */}
+            {/* Daily Targets — Training + Rest side by side */}
             <div className="card">
               <div className="card-header">
                 <div className="card-title">Daily Targets</div>
                 <div className="card-subtitle">
-                  {customizing ? 'Customized — edit freely' : 'Applied from recommendations or set manually'}
+                  {customizing ? 'Customized — edit freely' : 'Set from recommendations or manually'}
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Calories (kcal)</label>
-                <input type="number" className="form-input" value={profile.target_calories}
-                  onChange={e => setProfile({ ...profile, target_calories: parseInt(e.target.value) || 0 })} />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label" style={{ color: 'var(--color-protein)' }}>Protein (g)</label>
-                  <input type="number" className="form-input" value={profile.target_protein_g}
-                    onChange={e => setProfile({ ...profile, target_protein_g: parseInt(e.target.value) || 0 })} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                {/* Training day targets */}
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px', color: 'var(--accent-indigo)' }}>🏋️ Workout Day</div>
+                  <div className="form-group">
+                    <label className="form-label">Calories</label>
+                    <input type="number" className="form-input" value={profile.target_calories}
+                      onChange={e => setProfile({ ...profile, target_calories: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ color: 'var(--color-protein)' }}>Protein (g)</label>
+                    <input type="number" className="form-input" value={profile.target_protein_g}
+                      onChange={e => setProfile({ ...profile, target_protein_g: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ color: 'var(--color-carbs)' }}>Carbs (g)</label>
+                    <input type="number" className="form-input" value={profile.target_carbs_g}
+                      onChange={e => setProfile({ ...profile, target_carbs_g: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ color: 'var(--color-fat)' }}>Fat (g)</label>
+                    <input type="number" className="form-input" value={profile.target_fat_g}
+                      onChange={e => setProfile({ ...profile, target_fat_g: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Fiber (g)</label>
+                    <input type="number" className="form-input" value={profile.target_fiber_g}
+                      onChange={e => setProfile({ ...profile, target_fiber_g: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Sodium (mg)</label>
+                    <input type="number" className="form-input" value={profile.target_sodium_mg}
+                      onChange={e => setProfile({ ...profile, target_sodium_mg: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', fontSize: '12px' }}
+                    onClick={() => handleApplySuggestion('training')} disabled={!suggestion}>
+                    Apply Suggested
+                  </button>
                 </div>
-                <div className="form-group">
-                  <label className="form-label" style={{ color: 'var(--color-carbs)' }}>Carbs (g)</label>
-                  <input type="number" className="form-input" value={profile.target_carbs_g}
-                    onChange={e => setProfile({ ...profile, target_carbs_g: parseInt(e.target.value) || 0 })} />
+
+                {/* Rest day targets */}
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px', color: '#8b5cf6' }}>😴 Rest Day</div>
+                  <div className="form-group">
+                    <label className="form-label">Calories</label>
+                    <input type="number" className="form-input" value={profile.rest_target_calories}
+                      onChange={e => setProfile({ ...profile, rest_target_calories: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ color: 'var(--color-protein)' }}>Protein (g)</label>
+                    <input type="number" className="form-input" value={profile.rest_target_protein_g}
+                      onChange={e => setProfile({ ...profile, rest_target_protein_g: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ color: 'var(--color-carbs)' }}>Carbs (g)</label>
+                    <input type="number" className="form-input" value={profile.rest_target_carbs_g}
+                      onChange={e => setProfile({ ...profile, rest_target_carbs_g: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ color: 'var(--color-fat)' }}>Fat (g)</label>
+                    <input type="number" className="form-input" value={profile.rest_target_fat_g}
+                      onChange={e => setProfile({ ...profile, rest_target_fat_g: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Fiber (g)</label>
+                    <input type="number" className="form-input" value={profile.rest_target_fiber_g}
+                      onChange={e => setProfile({ ...profile, rest_target_fiber_g: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Sodium (mg)</label>
+                    <input type="number" className="form-input" value={profile.rest_target_sodium_mg}
+                      onChange={e => setProfile({ ...profile, rest_target_sodium_mg: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', fontSize: '12px' }}
+                    onClick={() => handleApplySuggestion('rest')} disabled={!restSuggestion}>
+                    Apply Suggested
+                  </button>
                 </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label" style={{ color: 'var(--color-fat)' }}>Fat (g)</label>
-                  <input type="number" className="form-input" value={profile.target_fat_g}
-                    onChange={e => setProfile({ ...profile, target_fat_g: parseInt(e.target.value) || 0 })} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fiber (g)</label>
-                  <input type="number" className="form-input" value={profile.target_fiber_g}
-                    onChange={e => setProfile({ ...profile, target_fiber_g: parseInt(e.target.value) || 0 })} />
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Sodium Limit (mg)</label>
-                <input type="number" className="form-input" value={profile.target_sodium_mg}
-                  onChange={e => setProfile({ ...profile, target_sodium_mg: parseInt(e.target.value) || 0 })} />
               </div>
 
-              {/* Macro % preview */}
-              <div style={{ marginTop: '16px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-around', textAlign: 'center', fontSize: '13px' }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: 'var(--color-protein)', fontSize: '18px' }}>
-                    {Math.round((profile.target_protein_g * 4) / (profile.target_calories || 1) * 100)}%
+              {/* Macro % preview for both */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                {[
+                  { label: 'Workout', cal: profile.target_calories, p: profile.target_protein_g, c: profile.target_carbs_g, f: profile.target_fat_g },
+                  { label: 'Rest', cal: profile.rest_target_calories, p: profile.rest_target_protein_g, c: profile.rest_target_carbs_g, f: profile.rest_target_fat_g },
+                ].map(d => (
+                  <div key={d.label} style={{ padding: '12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-around', textAlign: 'center', fontSize: '12px' }}>
+                    {[
+                      { l: 'P', v: Math.round((d.p * 4) / (d.cal || 1) * 100), c: 'var(--color-protein)' },
+                      { l: 'C', v: Math.round((d.c * 4) / (d.cal || 1) * 100), c: 'var(--color-carbs)' },
+                      { l: 'F', v: Math.round((d.f * 9) / (d.cal || 1) * 100), c: 'var(--color-fat)' },
+                    ].map(m => (
+                      <div key={m.l}>
+                        <div style={{ fontWeight: 700, color: m.c, fontSize: '15px' }}>{m.v}%</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{m.l}</div>
+                      </div>
+                    ))}
                   </div>
-                  <div style={{ color: 'var(--text-muted)' }}>Protein</div>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, color: 'var(--color-carbs)', fontSize: '18px' }}>
-                    {Math.round((profile.target_carbs_g * 4) / (profile.target_calories || 1) * 100)}%
-                  </div>
-                  <div style={{ color: 'var(--text-muted)' }}>Carbs</div>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, color: 'var(--color-fat)', fontSize: '18px' }}>
-                    {Math.round((profile.target_fat_g * 9) / (profile.target_calories || 1) * 100)}%
-                  </div>
-                  <div style={{ color: 'var(--text-muted)' }}>Fat</div>
-                </div>
+                ))}
               </div>
 
               <button className="btn btn-primary" onClick={handleSaveProfile} disabled={saving}
                 style={{ marginTop: '16px', width: '100%', justifyContent: 'center' }}>
-                {saving ? 'Saving...' : 'Save Targets'}
+                {saving ? 'Saving...' : 'Save All Targets'}
               </button>
             </div>
           </div>

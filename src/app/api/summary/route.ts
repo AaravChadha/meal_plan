@@ -64,27 +64,37 @@ export async function GET(request: NextRequest) {
   WHERE fl.user_id = ? AND fl.logged_date = ?
   `).get(userId, targetDate) as Record<string, number>;
 
-  // Get user targets
+  // Check day type (rest or training) to pick the right targets
+  const dayTypeRow = db.prepare(
+    'SELECT day_type FROM day_types WHERE user_id = ? AND date = ?'
+  ).get(userId, targetDate) as { day_type: string } | undefined;
+  const dayType = dayTypeRow?.day_type ?? 'training';
+
+  // Get user targets — pick rest or training columns
   const user = db.prepare(`
     SELECT target_calories, target_protein_g, target_carbs_g, target_fat_g,
-           target_fiber_g, target_sodium_mg
+           target_fiber_g, target_sodium_mg,
+           rest_target_calories, rest_target_protein_g, rest_target_carbs_g,
+           rest_target_fat_g, rest_target_fiber_g, rest_target_sodium_mg
     FROM users WHERE id = ?
   `).get(userId) as Record<string, number>;
 
   const macros = calcMacroPercentages(row.total_protein_g, row.total_carbs_g, row.total_fat_g);
 
+  const isRest = dayType === 'rest';
   const summary = {
     date: targetDate,
+    day_type: dayType,
     ...row,
     ...macros,
     targets: {
-      calories: user?.target_calories || 2000,
-      protein_g: user?.target_protein_g || 150,
-      carbs_g: user?.target_carbs_g || 250,
-      fat_g: user?.target_fat_g || 65,
-      fiber_g: user?.target_fiber_g || 30,
+      calories: (isRest ? user?.rest_target_calories : user?.target_calories) || 2000,
+      protein_g: (isRest ? user?.rest_target_protein_g : user?.target_protein_g) || 150,
+      carbs_g: (isRest ? user?.rest_target_carbs_g : user?.target_carbs_g) || 250,
+      fat_g: (isRest ? user?.rest_target_fat_g : user?.target_fat_g) || 65,
+      fiber_g: (isRest ? user?.rest_target_fiber_g : user?.target_fiber_g) || 30,
       sugar_g: 50,
-      sodium_mg: user?.target_sodium_mg || 2300,
+      sodium_mg: (isRest ? user?.rest_target_sodium_mg : user?.target_sodium_mg) || 2300,
       cholesterol_mg: 300,
       saturated_fat_g: 20,
     },

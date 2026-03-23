@@ -105,16 +105,36 @@ function initTables(db: Database.Database) {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS day_types (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      day_type TEXT NOT NULL DEFAULT 'training' CHECK(day_type IN ('rest','training')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, date)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_food_log_date ON food_log(user_id, logged_date);
     CREATE INDEX IF NOT EXISTS idx_food_log_meal ON food_log(user_id, logged_date, meal_type);
     CREATE INDEX IF NOT EXISTS idx_weight_log_date ON weight_log(user_id, logged_date);
     CREATE INDEX IF NOT EXISTS idx_food_items_name ON food_items(name);
     CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+    CREATE INDEX IF NOT EXISTS idx_day_types ON day_types(user_id, date);
   `);
 
   // Migrate: add new columns if they don't exist yet (safe to run repeatedly)
   try { db.exec("ALTER TABLE users ADD COLUMN gender TEXT NOT NULL DEFAULT 'neutral'"); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN body_fat_pct REAL'); } catch {}
+  try { db.exec("ALTER TABLE users ADD COLUMN rest_activity_level TEXT NOT NULL DEFAULT 'sedentary'"); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN workout_burn INTEGER NOT NULL DEFAULT 400'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN rest_deficit INTEGER NOT NULL DEFAULT -500'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN workout_deficit INTEGER NOT NULL DEFAULT -500'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN rest_target_calories REAL NOT NULL DEFAULT 2000'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN rest_target_protein_g REAL NOT NULL DEFAULT 150'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN rest_target_carbs_g REAL NOT NULL DEFAULT 250'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN rest_target_fat_g REAL NOT NULL DEFAULT 65'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN rest_target_fiber_g REAL NOT NULL DEFAULT 30'); } catch {}
+  try { db.exec('ALTER TABLE users ADD COLUMN rest_target_sodium_mg REAL NOT NULL DEFAULT 2300'); } catch {}
 
   // No demo user seed — users register themselves
 

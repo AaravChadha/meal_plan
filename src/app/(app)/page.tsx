@@ -60,25 +60,44 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dayType, setDayType] = useState<'rest' | 'training'>('training');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [summaryRes, mealsRes] = await Promise.all([
+      const [summaryRes, mealsRes, dayTypeRes] = await Promise.all([
         fetch(`/api/summary?date=${date}`),
         fetch(`/api/food-log?date=${date}`),
+        fetch(`/api/day-type?date=${date}`),
       ]);
+      if (summaryRes.status === 401) { window.location.href = '/login'; return; }
       const summaryData = await summaryRes.json();
       const mealsData = await mealsRes.json();
+      const dayTypeData = await dayTypeRes.json();
 
       if (summaryData.success) setSummary(summaryData.data);
       if (mealsData.success) setMeals(mealsData.data);
+      if (dayTypeData.success) setDayType(dayTypeData.data.day_type);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
       setLoading(false);
     }
   }, [date]);
+
+  const handleToggleDayType = async () => {
+    const newType = dayType === 'training' ? 'rest' : 'training';
+    setDayType(newType);
+    await fetch('/api/day-type', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, day_type: newType }),
+    });
+    // Refetch summary so targets update
+    const res = await fetch(`/api/summary?date=${date}`);
+    const data = await res.json();
+    if (data.success) setSummary(data.data);
+  };
 
   useEffect(() => {
     fetchData();
@@ -152,6 +171,37 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
+            {/* Day type toggle */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 16px', marginBottom: '16px',
+              background: 'var(--bg-card)', borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-primary)',
+            }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                {dayType === 'training' ? '🏋️ Workout Day' : '😴 Rest Day'} — targets adjust automatically
+              </span>
+              <button
+                onClick={handleToggleDayType}
+                style={{
+                  display: 'flex', borderRadius: '20px', overflow: 'hidden',
+                  border: '1px solid var(--border-primary)', cursor: 'pointer',
+                  background: 'none', padding: 0,
+                }}
+              >
+                {['training', 'rest'].map(t => (
+                  <span key={t} style={{
+                    padding: '5px 14px', fontSize: '12px', fontWeight: 600,
+                    background: dayType === t ? (t === 'training' ? 'var(--accent-indigo)' : '#8b5cf6') : 'transparent',
+                    color: dayType === t ? '#fff' : 'var(--text-muted)',
+                    transition: 'background 0.15s',
+                  }}>
+                    {t === 'training' ? 'Workout' : 'Rest'}
+                  </span>
+                ))}
+              </button>
+            </div>
+
             {/* Alerts */}
             {alerts.map((alert, i) => (
               <div key={i} className={`alert-banner ${alert.type}`}>

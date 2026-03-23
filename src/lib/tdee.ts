@@ -95,6 +95,8 @@ export function generateSmartSuggestion(
   goal: Goal,
   gender: Gender = 'neutral',
   body_fat_pct?: number | null,
+  extra_burn: number = 0,
+  custom_adjustment?: number,
 ): SmartSuggestion {
   const lean_mass_kg = body_fat_pct
     ? Math.round(weight_kg * (1 - body_fat_pct / 100) * 10) / 10
@@ -108,10 +110,11 @@ export function generateSmartSuggestion(
     : calculateBMR(weight_kg, height_cm, age, gender);
 
   const multiplier = ACTIVITY_MULTIPLIERS[activityLevel];
-  const tdee = Math.round(bmr * multiplier);
+  const tdee = Math.round(bmr * multiplier) + extra_burn;
 
-  const adjustments: Record<Goal, number> = { cut: -500, maintain: 0, bulk: 250 };
-  const calories = tdee + adjustments[goal];
+  const defaultAdjustments: Record<Goal, number> = { cut: -500, maintain: 0, bulk: 250 };
+  const adjustment = custom_adjustment ?? defaultAdjustments[goal];
+  const calories = tdee + adjustment;
 
   // Protein: based on lean mass if known, otherwise total weight.
   // Higher on cut to preserve muscle, slightly lower on bulk.
@@ -201,6 +204,15 @@ export const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
   moderate: 'Moderately Active (3-5 days/week)',
   active: 'Very Active (6-7 days/week)',
   very_active: 'Extra Active (physical job + training)',
+};
+
+// Labels for base daily activity (excluding workouts)
+export const BASE_ACTIVITY_LABELS: Record<ActivityLevel, string> = {
+  sedentary: 'Sedentary (desk/classes, minimal walking)',
+  light: 'Lightly Active (some walking, light chores)',
+  moderate: 'Moderately Active (on feet most of day)',
+  active: 'Very Active (physical job, lots of walking)',
+  very_active: 'Extra Active (construction, manual labor)',
 };
 
 export const GOAL_LABELS: Record<Goal, string> = {
