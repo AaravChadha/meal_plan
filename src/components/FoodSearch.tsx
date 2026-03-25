@@ -116,7 +116,7 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
                   <div className="search-result-name">
                     {food.name}
                     <span className={`search-source-badge ${food.source}`}>
-                      {food.source === 'local' ? '★ Local' : 'USDA'}
+                      {food.source === 'local' ? '★ Local' : food.source === 'openfoodfacts' ? 'OFF' : 'USDA'}
                     </span>
                   </div>
                   {food.brand && (

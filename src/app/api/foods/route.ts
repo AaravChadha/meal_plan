@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { searchUSDA, ParsedFood } from '@/lib/usda';
+import { searchUSDA, searchOpenFoodFacts, ParsedFood } from '@/lib/usda';
 
 // GET /api/foods?q=chicken&source=all
 export async function GET(request: NextRequest) {
@@ -28,20 +28,17 @@ export async function GET(request: NextRequest) {
     results = localResults.map((r) => ({ ...r, source: 'local' }));
   }
 
-  // Search USDA API
+  // Search external APIs in parallel if local results are sparse
   if ((source === 'all' || source === 'usda') && results.length < 10) {
-    try {
-      const usdaResults = await searchUSDA(q, 8);
-      const usdaMapped = usdaResults.map((f: ParsedFood) => ({
-        id: null,
-        ...f,
-        is_custom: 0,
-        source: 'usda',
-      }));
-      results = [...results, ...usdaMapped];
-    } catch {
-      // Fall back to local results only
-    }
+    const [usdaResults, offResults] = await Promise.all([
+      searchUSDA(q, 5).catch(() => [] as ParsedFood[]),
+      searchOpenFoodFacts(q, 5).catch(() => [] as ParsedFood[]),
+    ]);
+
+    const mapExternal = (foods: ParsedFood[], src: string) =>
+      foods.map((f) => ({ id: null, ...f, is_custom: 0, source: src }));
+
+    results = [...results, ...mapExternal(usdaResults, 'usda'), ...mapExternal(offResults, 'openfoodfacts')];
   }
 
   return NextResponse.json({ success: true, data: results });

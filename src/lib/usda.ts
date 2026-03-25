@@ -98,3 +98,61 @@ export async function searchUSDA(query: string, pageSize = 8): Promise<ParsedFoo
     return [];
   }
 }
+
+// ── Open Food Facts API Client ──────────────────────────────────
+// Free, no key required, no enforced rate limit
+// Best for branded/packaged foods (Chobani, Oikos, protein bars, etc.)
+
+const OFF_BASE = 'https://world.openfoodfacts.net/cgi/search.pl';
+
+export async function searchOpenFoodFacts(query: string, pageSize = 8): Promise<ParsedFood[]> {
+  try {
+    const url = `${OFF_BASE}?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=${pageSize}&fields=product_name,brands,nutriments,serving_size`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'NutriTrack/1.0 (student project)' },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) {
+      console.warn(`Open Food Facts API error: ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json();
+
+    return (data.products || [])
+      .filter((p: Record<string, unknown>) => p.product_name && p.nutriments)
+      .map((p: Record<string, unknown>) => {
+        const n = p.nutriments as Record<string, number>;
+        // Parse serving size (e.g. "170 g" → 170)
+        const servingStr = (p.serving_size as string) || '100 g';
+        const servingMatch = servingStr.match(/(\d+\.?\d*)\s*(g|ml|oz)/i);
+        const servingSize = servingMatch ? parseFloat(servingMatch[1]) : 100;
+        const servingUnit = servingMatch ? servingMatch[2].toLowerCase() : 'g';
+
+        // Open Food Facts gives per-100g values, scale to serving size
+        const scale = servingSize / 100;
+
+        return {
+          name: p.product_name as string,
+          brand: (p.brands as string) || null,
+          category: null,
+          serving_size: servingSize,
+          serving_unit: servingUnit,
+          calories: Math.round(((n['energy-kcal_100g'] || 0) * scale) * 100) / 100,
+          protein_g: Math.round(((n['proteins_100g'] || 0) * scale) * 100) / 100,
+          carbs_g: Math.round(((n['carbohydrates_100g'] || 0) * scale) * 100) / 100,
+          fat_g: Math.round(((n['fat_100g'] || 0) * scale) * 100) / 100,
+          fiber_g: Math.round(((n['fiber_100g'] || 0) * scale) * 100) / 100,
+          sugar_g: Math.round(((n['sugars_100g'] || 0) * scale) * 100) / 100,
+          sodium_mg: Math.round(((n['sodium_100g'] || 0) * scale * 1000) * 100) / 100, // g → mg
+          cholesterol_mg: Math.round(((n['cholesterol_100g'] || 0) * scale * 1000) * 100) / 100,
+          saturated_fat_g: Math.round(((n['saturated-fat_100g'] || 0) * scale) * 100) / 100,
+          fdc_id: `off-${p.product_name}`, // placeholder ID for Open Food Facts
+        };
+      });
+  } catch (err) {
+    console.warn('Open Food Facts search failed:', err);
+    return [];
+  }
+}
