@@ -953,7 +953,10 @@ function BaselineManager() {
                     {slot.food_name} — {Math.round(slot.calories ?? 0)} cal, {Math.round(slot.protein_g ?? 0)}p/{Math.round(slot.carbs_g ?? 0)}c/{Math.round(slot.fat_g ?? 0)}f
                   </div>
                 ) : (
-                  <div style={{ fontSize: '12px', color: 'var(--accent-indigo)', marginTop: '2px' }}>No default item set — tap to assign</div>
+                  <div style={{ fontSize: '12px', color: 'var(--accent-indigo)', marginTop: '2px', cursor: 'pointer' }}
+                    onClick={() => setEditingSlotId(slot.id)}>
+                    No default item set — click to assign
+                  </div>
                 )}
 
                 {/* Inline search when editing this slot */}
