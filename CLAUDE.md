@@ -191,6 +191,19 @@ The app currently works for all goals in formulas but the UX/tips/grading are cu
 
 ---
 
+### Phase 2.5 — Deploy Web App
+Get the web app live so others can use it. Don't wait for mobile.
+
+#### 2.5a Deploy & Portfolio (Web)
+- [ ] 2.5a.1 Deploy to Vercel (or Railway/Render) — move from SQLite to Turso or keep SQLite with persistent disk
+- [ ] 2.5a.2 Set up environment variables for production (session secret, etc.)
+- [ ] 2.5a.3 Write project README with screenshots, tech stack, what you learned
+- [ ] 2.5a.4 Add to resume with bullet points on what it demonstrates
+- [ ] 2.5a.5 Share with friends/classmates at Purdue for real-world testing
+- [ ] 2.5a.6 Collect feedback, fix bugs from real users
+
+---
+
 ### Phase 3 — Mobile App (Expo/React Native)
 Rebuild the UI for iOS and Android. Backend logic carries over.
 
@@ -221,12 +234,6 @@ Rebuild the UI for iOS and Android. Backend logic carries over.
 - [ ] 3.4.3 Full AI calorie estimation — snap a photo, AI identifies the food AND estimates calories/macros
 - [ ] 3.4.4 Save photo with food log entry so you can look back at what you ate
 
-#### 3.5 Ship It
-- [ ] 3.5.1 App icon and splash screen
-- [ ] 3.5.2 Build with EAS for iOS and Android
-- [ ] 3.5.3 TestFlight beta (iOS)
-- [ ] 3.5.4 App Store / Play Store submission
-
 ---
 
 ### Phase 4 — AI Meal Suggestion Engine
@@ -252,12 +259,19 @@ Fine-tuned AI model that knows Purdue dining, your macros, and your preferences.
 - [ ] 4.3.3 Allergen/preference awareness — avoid foods user has flagged (vegetarian, no peanuts, etc.)
 - [ ] 4.3.4 Budget-aware — if user is running low on meal swipes, suggest efficient combos
 
-### Phase 5 — Portfolio & Ship
-#### 5.1 Portfolio
-- [ ] 5.1.1 Write project README with screenshots, tech stack, what you learned
-- [ ] 5.1.2 Deploy web version (Vercel or similar)
-- [ ] 5.1.3 Add to resume with bullet points on what it demonstrates
-- [ ] 5.1.4 Consider multi-user features if turning into a real product
+### Phase 5 — Ship Mobile App & Scale
+#### 5.1 Launch Mobile
+- [ ] 5.1.1 App icon and splash screen (moved from 3.5)
+- [ ] 5.1.2 Build with EAS for iOS and Android
+- [ ] 5.1.3 TestFlight beta (iOS) — share with friends for testing
+- [ ] 5.1.4 App Store / Play Store submission
+- [ ] 5.1.5 Update resume with both web + mobile versions
+
+#### 5.2 Scale (if turning into a real product)
+- [ ] 5.2.1 Cloud database (Supabase/Turso) for web + mobile sync
+- [ ] 5.2.2 User accounts sync across web and mobile
+- [ ] 5.2.3 Analytics dashboard — how many users, popular foods, etc.
+- [ ] 5.2.4 Consider monetization if there's demand
 
 ## Rules
 - **NEVER delete the database** — use ALTER TABLE migrations. User hates re-registering.
