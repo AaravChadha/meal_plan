@@ -106,8 +106,8 @@ export default function FoodLogPage() {
     try {
       let foodItemId = selectedFood.id;
 
-      // If USDA food, save it locally first
-      if (!foodItemId && selectedFood.source === 'usda') {
+      // If external food (USDA or Open Food Facts), save it locally first
+      if (!foodItemId && (selectedFood.source === 'usda' || selectedFood.source === 'openfoodfacts')) {
         const saveRes = await fetch('/api/foods', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
