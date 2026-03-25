@@ -54,9 +54,9 @@ Get the existing app working correctly before adding anything new.
 - [x] 1.1.2 Expand `scoreToGrade()` with finer thresholds (≥97=A+, ≥93=A, ≥90=A-, etc.) ✅
 - [x] 1.1.3 Update `GRADE_COLORS` to handle +/- variants ✅
 - [x] 1.1.4 Grading should favor being under calories vs over when goal is cut ✅
-- [ ] 1.1.5 Penalize going too far over OR under — extreme deficits (e.g. eating 800 cal on a 2100 target) and extreme surpluses should both grade poorly, not just missing targets
-- [ ] 1.1.6 Update grades page UI (GradeBadge, report card, history) for new grade types
-- [ ] 1.1.7 Add a visual grading rubric section explaining how grades work
+- [x] 1.1.5 Penalize going too far over OR under — extreme deficits (e.g. eating 800 cal on a 2100 target) and extreme surpluses should both grade poorly, not just missing targets ✅
+- [x] 1.1.6 Update grades page UI (GradeBadge, report card, history) for new grade types ✅
+- [x] 1.1.7 Add a visual grading rubric section explaining how grades work ✅
 
 #### 1.2 Fix Profile & Recommendations
 - [x] 1.2.1 Deficit must visibly subtract from target — show "TDEE − deficit = what you eat" ✅

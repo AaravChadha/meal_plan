@@ -73,51 +73,92 @@ export const GRADE_COLORS: Record<LetterGrade, string> = {
 };
 
 // ── Score a single "hit" nutrient (protein, fiber, carbs, fat) ────────
-// You want to hit ≥ target. Going over is fine.
+// You want to hit the target. Going slightly over is fine, but extreme
+// over-eating wastes calories (or causes GI issues for fiber).
+// Extreme under-eating means you're missing important macros.
 function scoreHitNutrient(current: number, target: number): number {
   if (target === 0) return 100;
   const pct = (current / target) * 100;
-  if (pct >= 90) return 100;
-  if (pct >= 80) return 85;
-  if (pct >= 70) return 75;
-  if (pct >= 60) return 65;
-  return Math.max(0, pct * 0.5); // scale down for F range
+
+  // Sweet spot: 90–120% of target
+  if (pct >= 90 && pct <= 120) return 100;
+  // Slightly over (120–150%): mostly fine, minor penalty
+  if (pct > 120 && pct <= 150) return 90;
+  // Slightly under (80–90%)
+  if (pct >= 80 && pct < 90) return 87;
+  // Excessive over (150–200%): wasteful, crowds out other macros
+  if (pct > 150 && pct <= 200) return 75;
+  // More under (70–80%)
+  if (pct >= 70 && pct < 80) return 75;
+  // Way over (>200%): not beneficial, potentially harmful
+  if (pct > 200) return 60;
+  // Significantly under (60–70%)
+  if (pct >= 60 && pct < 70) return 65;
+  // Very under (<60%): major shortfall
+  return Math.max(15, Math.round(pct * 0.6));
 }
 
 // ── Score calories ─────────────────────────────────────────────────────
 // On a cut: slightly under is BETTER than slightly over (deficit is the goal)
+//   BUT extreme under-eating (crash dieting) is dangerous — muscle loss,
+//   metabolic adaptation, hormonal disruption. Penalize both extremes.
 // On a bulk: slightly over is better than under
+//   BUT massive surplus = mostly fat gain. Penalize both extremes.
 // On maintain: symmetric
 function scoreCalories(current: number, target: number, goal: string = 'maintain'): number {
   if (target === 0) return 100;
   const pct = (current / target) * 100;
 
+  // Universal: extreme starvation is always terrible
+  if (pct < 40) return 15;
+
   if (goal === 'cut') {
-    // Cutting: under target is fine, over is penalized more
-    if (pct >= 90 && pct <= 105) return 100;  // slightly under = perfect
-    if (pct >= 80 && pct <= 100) return 95;   // under is still great
-    if (pct > 105 && pct <= 110) return 82;   // slightly over — not ideal
-    if (pct >= 70 && pct <= 80) return 85;    // more under, still decent
-    if (pct > 110 && pct <= 120) return 72;   // over — worse
-    if (pct >= 60) return 65;
+    // Perfect zone: 85–100% of target (hitting deficit well)
+    if (pct >= 85 && pct <= 100) return 100;
+    // Slightly over (100–105%): still good on a cut
+    if (pct > 100 && pct <= 105) return 93;
+    // Aggressive deficit (75–85%): works but risking muscle loss
+    if (pct >= 75 && pct < 85) return 88;
+    // Over target (105–115%): not ideal on a cut
+    if (pct > 105 && pct <= 115) return 78;
+    // Too far under (60–75%): crash diet territory — metabolic adaptation
+    if (pct >= 60 && pct < 75) return 62;
+    // Significantly over (115–130%): defeating the purpose of cutting
+    if (pct > 115 && pct <= 130) return 60;
+    // Extreme under (40–60%): dangerous
+    if (pct >= 40 && pct < 60) return 35;
+    // Way over (>130%): not cutting anymore
     return 30;
   }
 
   if (goal === 'bulk') {
-    // Bulking: over target is fine, under is penalized more
-    if (pct >= 95 && pct <= 115) return 100;
-    if (pct >= 100 && pct <= 120) return 95;
-    if (pct >= 85 && pct < 95) return 82;
-    if (pct >= 80 || pct <= 130) return 72;
+    // Perfect zone: 95–110% (hitting surplus)
+    if (pct >= 95 && pct <= 110) return 100;
+    // Slightly over (110–120%): fine on a bulk
+    if (pct > 110 && pct <= 120) return 93;
+    // Slightly under (85–95%): not eating enough to grow
+    if (pct >= 85 && pct < 95) return 83;
+    // Dirty bulk (120–140%): mostly fat gain at this surplus
+    if (pct > 120 && pct <= 140) return 73;
+    // Under (75–85%): not bulking anymore
+    if (pct >= 75 && pct < 85) return 65;
+    // Way over (>140%): excessive, all fat
+    if (pct > 140) return 50;
+    // Significantly under (60–75%)
+    if (pct >= 60 && pct < 75) return 50;
+    // Extreme under (<60%): losing weight on a bulk
     return 30;
   }
 
-  // Maintain: symmetric
-  if (pct >= 90 && pct <= 110) return 100;
-  if (pct >= 80 && pct <= 120) return 82;
-  if (pct >= 70 && pct <= 130) return 72;
-  if (pct >= 60 && pct <= 140) return 62;
-  return 30;
+  // Maintain: symmetric — distance from 100% is what matters
+  const deviance = Math.abs(pct - 100);
+  if (deviance <= 5) return 100;
+  if (deviance <= 10) return 92;
+  if (deviance <= 15) return 82;
+  if (deviance <= 20) return 72;
+  if (deviance <= 30) return 60;
+  if (deviance <= 40) return 45;
+  return 25;
 }
 
 // ── Score a "limit" nutrient (sodium, saturated fat, cholesterol) ─────
@@ -135,18 +176,26 @@ function scoreLimitNutrient(current: number, target: number): number {
 function feedbackHit(label: string, current: number, target: number, unit: string): string {
   if (target === 0) return `No target set for ${label}.`;
   const pct = Math.round((current / target) * 100);
-  if (pct >= 90) return `${label} on track at ${pct}% of target.`;
+  if (pct >= 90 && pct <= 120) return `${label} on track at ${pct}% of target.`;
+  if (pct > 120 && pct <= 150) return `${label} slightly over target (${pct}%) — mostly fine.`;
+  if (pct > 150 && pct <= 200) return `${label} well over target (${pct}%) — extra ${label.toLowerCase()} isn't adding benefit and wastes calories.`;
+  if (pct > 200) return `${label} at ${pct}% of target — way too much. This crowds out other macros.`;
   if (pct >= 70) return `${label} a bit low — ${Math.round(target - current)}${unit} short of target.`;
-  return `${label} significantly under target — ${Math.round(target - current)}${unit} remaining.`;
+  return `${label} significantly under target — only ${pct}%, ${Math.round(target - current)}${unit} remaining.`;
 }
 
-function feedbackCalories(current: number, target: number): string {
+function feedbackCalories(current: number, target: number, goal: string = 'maintain'): string {
   if (target === 0) return 'No calorie target set.';
   const pct = Math.round((current / target) * 100);
   const diff = Math.round(current - target);
-  if (pct >= 90 && pct <= 110) return `Calories right on target (${pct}%).`;
-  if (pct < 90) return `${Math.abs(diff)} kcal under target.`;
-  return `${diff} kcal over target.`;
+  if (pct >= 85 && pct <= 105) return `Calories right on target (${pct}%).`;
+  if (pct < 40) return `Only ${current} kcal — dangerously low. Your body needs fuel to function.`;
+  if (pct < 60) return `${Math.abs(diff)} kcal under target (${pct}%) — extreme deficit risks muscle loss and metabolic slowdown.`;
+  if (pct < 75) return `${Math.abs(diff)} kcal under target (${pct}%) — ${goal === 'cut' ? 'too aggressive, consider eating more to preserve muscle' : 'significantly under'}.`;
+  if (pct < 85) return `${Math.abs(diff)} kcal under target (${pct}%).`;
+  if (pct > 130) return `${diff} kcal over target (${pct}%) — ${goal === 'cut' ? 'this erases your deficit entirely' : goal === 'bulk' ? 'excessive surplus, mostly stored as fat' : 'well over maintenance'}.`;
+  if (pct > 115) return `${diff} kcal over target (${pct}%) — ${goal === 'cut' ? 'over target on a cut' : 'surplus is getting large'}.`;
+  return `${diff} kcal over target (${pct}%).`;
 }
 
 function feedbackLimit(label: string, current: number, target: number, unit: string): string {
@@ -177,7 +226,7 @@ export function gradeDay(
       isLimitType: false,
       score: scoreCalories(summary.total_calories ?? 0, targets.calories ?? 2000, goal),
       grade: 'A',
-      feedback: feedbackCalories(summary.total_calories ?? 0, targets.calories ?? 2000),
+      feedback: feedbackCalories(summary.total_calories ?? 0, targets.calories ?? 2000, goal),
     },
     {
       key: 'protein',
