@@ -119,7 +119,17 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
                       {food.source === 'local' ? '★ Local' : 'USDA'}
                     </span>
                   </div>
-                  {food.brand && <div className="search-result-brand">{food.brand}</div>}
+                  {food.brand && (
+                    <div className="search-result-brand">
+                      {food.brand === 'Purdue Dining' ? (
+                        <span style={{
+                          background: 'rgba(206,163,50,0.15)', color: '#CFA332',
+                          padding: '1px 6px', borderRadius: '4px', fontSize: '10px',
+                          fontWeight: 700, letterSpacing: '0.3px',
+                        }}>🚂 Purdue Dining</span>
+                      ) : food.brand}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div className="search-result-cal">{Math.round(food.calories)} cal</div>
