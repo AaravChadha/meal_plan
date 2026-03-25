@@ -961,26 +961,13 @@ function BaselineManager() {
               background: 'var(--bg-elevated)', border: '1px solid var(--border-primary)',
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{slot.slot_name}</div>
-                {slot.food_name ? (
-                  <div style={{ marginTop: '2px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>{slot.food_name}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
-                      {Math.round(slot.calories ?? 0)} cal · {Math.round(slot.protein_g ?? 0)}p/{Math.round(slot.carbs_g ?? 0)}c/{Math.round(slot.fat_g ?? 0)}f
-                    </span>
-                  </div>
-                ) : (
-                  <div style={{ fontSize: '13px', color: 'var(--accent-indigo)', marginTop: '2px', cursor: 'pointer' }}
-                    onClick={() => setEditingSlotId(slot.id)}>
-                    Click to assign a food
-                  </div>
-                )}
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '4px' }}>{slot.slot_name}</div>
 
-                {/* Inline search when editing this slot */}
-                {editingSlotId === slot.id && (
-                  <div style={{ marginTop: '8px' }}>
+                {/* Show food info OR search — never both */}
+                {editingSlotId === slot.id || !slot.food_name ? (
+                  <div>
                     <input
-                      type="text" className="form-input" placeholder="Search foods..."
+                      type="text" className="form-input" placeholder="Search foods to assign..."
                       value={searchQuery} onChange={e => searchFoods(e.target.value)}
                       autoFocus style={{ fontSize: '12px', padding: '6px 10px' }}
                     />
@@ -1007,17 +994,33 @@ function BaselineManager() {
                       </div>
                     )}
                   </div>
+                ) : (
+                  <div>
+                    <span style={{ fontSize: '13px', fontWeight: 600 }}>{slot.food_name}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
+                      {Math.round(slot.calories ?? 0)} cal · {Math.round(slot.protein_g ?? 0)}p/{Math.round(slot.carbs_g ?? 0)}c/{Math.round(slot.fat_g ?? 0)}f
+                    </span>
+                  </div>
                 )}
               </div>
 
-              <button onClick={() => setEditingSlotId(editingSlotId === slot.id ? null : slot.id)}
-                style={{
-                  padding: '4px 10px', fontSize: '11px', borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-primary)', background: 'none',
-                  color: 'var(--text-muted)', cursor: 'pointer',
-                }}>
-                {editingSlotId === slot.id ? 'Cancel' : 'Swap'}
-              </button>
+              {/* Only show Swap button when a food is assigned and we're not already editing */}
+              {slot.food_name && editingSlotId !== slot.id && (
+                <button onClick={() => { setEditingSlotId(slot.id); setSearchQuery(''); setSearchResults([]); }}
+                  style={{
+                    padding: '4px 10px', fontSize: '11px', borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-primary)', background: 'none',
+                    color: 'var(--text-muted)', cursor: 'pointer',
+                  }}>Swap</button>
+              )}
+              {editingSlotId === slot.id && slot.food_name && (
+                <button onClick={() => { setEditingSlotId(null); setSearchQuery(''); setSearchResults([]); }}
+                  style={{
+                    padding: '4px 10px', fontSize: '11px', borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-primary)', background: 'none',
+                    color: 'var(--text-muted)', cursor: 'pointer',
+                  }}>Cancel</button>
+              )}
               <button onClick={() => removeSlot(slot.id)}
                 style={{
                   padding: '4px 8px', fontSize: '11px', borderRadius: 'var(--radius-sm)',
