@@ -101,16 +101,16 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [ ] 2.2.9 Visual indicator showing how much of your daily target the baseline covers (e.g. "Baseline = 800 cal, 60g protein — 38% of your day done before dining court")
 
 #### 2.3 Food Log Enhancements
-- [ ] 2.3.0 Custom foods, combos, favorites, and baselines must persist in the database (not code) — survive server restarts, code updates, and redeployments. Tied to user ID so each person keeps their own.
-- [ ] 2.3.1 Favorite foods — star items for quick access
-- [ ] 2.3.2 Recent foods — show last 10 logged items at top of search
-- [ ] 2.3.3 Custom food entry — add your own foods with nutrition info
-- [ ] 2.3.4 Edit logged entries — tap a logged item to change servings, swap to a different food, or delete it (inline edit, no page navigation)
-- [ ] 2.3.5 Drag and drop food items between meals — move an item from breakfast to lunch if added to the wrong meal
-- [ ] 2.3.6 Copy meals from a previous day
-- [ ] 2.3.7 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa"). NOT full meals — just a few station items that go together.
-- [ ] 2.3.8 Adding a combo logs each item separately so you can remove/edit individual items after
-- [ ] 2.3.9 Combo manager — create/edit/delete combos from food log or profile page
+- [ ] 2.3.1 All custom foods, combos, favorites, and baselines persist in DB (not code) — tied to user ID, survive restarts/deploys
+- [ ] 2.3.2 Favorite foods — star items for quick access
+- [x] 2.3.3 Recent foods — show last 10 logged items at top of search ✅ (done in 2.1.4)
+- [ ] 2.3.4 Custom food entry — add your own foods with nutrition info
+- [ ] 2.3.5 Edit logged entries — tap a logged item to change servings, swap to a different food, or delete it (inline edit, no page navigation)
+- [ ] 2.3.6 Drag and drop food items between meals — move an item from breakfast to lunch if added to the wrong meal
+- [ ] 2.3.7 Copy meals from a previous day
+- [ ] 2.3.8 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa"). NOT full meals — just a few station items that go together.
+- [ ] 2.3.9 Adding a combo logs each item separately so you can remove/edit individual items after
+- [ ] 2.3.10 Combo manager — create/edit/delete combos from food log or profile page
 
 #### 2.4 Grades Improvements
 - [ ] 2.4.1 Asymmetric grading per nutrient — not all macros should penalize going over equally:
