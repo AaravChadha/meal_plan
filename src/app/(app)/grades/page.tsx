@@ -400,6 +400,7 @@ export default function GradesPage() {
       try {
         // Fetch profile for targets + suggestion
         const profileRes = await fetch('/api/profile');
+        if (profileRes.status === 401) { window.location.href = '/login'; return; }
         const profileData = await profileRes.json();
         if (!profileData.success) return;
         const p: Profile = profileData.data;
@@ -407,6 +408,7 @@ export default function GradesPage() {
 
         // Today's summary
         const todayRes = await fetch(`/api/summary?date=${date}`);
+        if (todayRes.status === 401) { window.location.href = '/login'; return; }
         const todayData = await todayRes.json();
 
         // Last 7 days
@@ -415,6 +417,7 @@ export default function GradesPage() {
         startDate.setDate(startDate.getDate() - 6);
         const start = startDate.toISOString().slice(0, 10);
         const weekRes = await fetch(`/api/summary?start=${start}&end=${endDate}`);
+        if (weekRes.status === 401) { window.location.href = '/login'; return; }
         const weekData = await weekRes.json();
 
         // Use targets from today's summary (day-type-aware: rest vs workout)

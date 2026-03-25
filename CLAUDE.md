@@ -63,7 +63,7 @@ Get the existing app working correctly before adding anything new.
 - [x] 1.2.2 Auto-update daily targets when deficit/TDEE/workout burn changes (no manual "Apply" needed) ✅
 - [x] 1.2.3 Layout consistency — workout day on LEFT everywhere (recommendation cards AND deficit inputs) ✅
 - [x] 1.2.4 Fix profile black screen on invalid session (redirect to /login on any 401) ✅
-- [ ] 1.2.5 All API-fetching pages should handle 401 with redirect (not just profile) — grades, food log, analytics still missing
+- [x] 1.2.5 All API-fetching pages should handle 401 with redirect (not just profile) — grades, food log, analytics still missing ✅
 
 #### 1.3 Security & Backup
 - [x] 1.3.1 Create a clean template DB (`data/nutritrack.seed.db`) with only Purdue foods + common foods, no user data ✅

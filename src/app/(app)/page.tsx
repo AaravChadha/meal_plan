@@ -70,7 +70,7 @@ export default function Dashboard() {
         fetch(`/api/food-log?date=${date}`),
         fetch(`/api/day-type?date=${date}`),
       ]);
-      if (summaryRes.status === 401) { window.location.href = '/login'; return; }
+      if (summaryRes.status === 401 || mealsRes.status === 401 || dayTypeRes.status === 401) { window.location.href = '/login'; return; }
       const summaryData = await summaryRes.json();
       const mealsData = await mealsRes.json();
       const dayTypeData = await dayTypeRes.json();
@@ -88,13 +88,15 @@ export default function Dashboard() {
   const handleToggleDayType = async () => {
     const newType = dayType === 'training' ? 'rest' : 'training';
     setDayType(newType);
-    await fetch('/api/day-type', {
+    const dtRes = await fetch('/api/day-type', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date, day_type: newType }),
     });
+    if (dtRes.status === 401) { window.location.href = '/login'; return; }
     // Refetch summary so targets update
     const res = await fetch(`/api/summary?date=${date}`);
+    if (res.status === 401) { window.location.href = '/login'; return; }
     const data = await res.json();
     if (data.success) setSummary(data.data);
   };
@@ -105,7 +107,8 @@ export default function Dashboard() {
 
   const handleDeleteEntry = async (id: number) => {
     try {
-      await fetch(`/api/food-log?id=${id}`, { method: 'DELETE' });
+      const delRes = await fetch(`/api/food-log?id=${id}`, { method: 'DELETE' });
+      if (delRes.status === 401) { window.location.href = '/login'; return; }
       fetchData();
     } catch (err) {
       console.error('Error deleting entry:', err);

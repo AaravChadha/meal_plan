@@ -31,6 +31,7 @@ export default function AnalyticsPage() {
 
       try {
         const res = await fetch(`/api/summary?start=${start}&end=${end}`);
+        if (res.status === 401) { window.location.href = '/login'; return; }
         const result = await res.json();
         if (result.success) setData(result.data);
       } catch (err) {

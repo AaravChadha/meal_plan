@@ -82,6 +82,7 @@ export default function FoodLogPage() {
   const fetchMeals = useCallback(async () => {
     try {
       const res = await fetch(`/api/food-log?date=${date}`);
+      if (res.status === 401) { window.location.href = '/login'; return; }
       const data = await res.json();
       if (data.success) setMeals(data.data);
     } catch (err) {
@@ -112,6 +113,7 @@ export default function FoodLogPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(selectedFood),
         });
+        if (saveRes.status === 401) { window.location.href = '/login'; return; }
         const saveData = await saveRes.json();
         if (saveData.success) {
           foodItemId = saveData.data.id;
@@ -130,6 +132,7 @@ export default function FoodLogPage() {
           logged_date: date,
         }),
       });
+      if (res.status === 401) { window.location.href = '/login'; return; }
 
       const data = await res.json();
       if (data.success) {
@@ -157,6 +160,7 @@ export default function FoodLogPage() {
           category: 'Custom',
         }),
       });
+      if (saveRes.status === 401) { window.location.href = '/login'; return; }
       const saveData = await saveRes.json();
       if (!saveData.success) return;
 
@@ -173,6 +177,7 @@ export default function FoodLogPage() {
           logged_date: date,
         }),
       });
+      if (res.status === 401) { window.location.href = '/login'; return; }
 
       const data = await res.json();
       if (data.success) {
@@ -188,7 +193,8 @@ export default function FoodLogPage() {
 
   const handleDeleteEntry = async (id: number) => {
     try {
-      await fetch(`/api/food-log?id=${id}`, { method: 'DELETE' });
+      const delRes = await fetch(`/api/food-log?id=${id}`, { method: 'DELETE' });
+      if (delRes.status === 401) { window.location.href = '/login'; return; }
       fetchMeals();
       showToastMsg('Entry removed');
     } catch (err) {

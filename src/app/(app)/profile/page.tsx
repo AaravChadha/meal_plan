@@ -183,6 +183,7 @@ export default function ProfilePage() {
           rest_target_sodium_mg: profile.rest_target_sodium_mg,
         }),
       });
+      if (res.status === 401) { window.location.href = '/login'; return; }
       const data = await res.json();
       if (data.success) {
         setProfile(data.data);
@@ -247,11 +248,12 @@ export default function ProfilePage() {
     if (!raw) return;
     const w = weightUnit === 'lbs' ? lbsToKg(raw) : raw;
     if (w < 20 || w > 300) return;
-    await fetch('/api/weight', {
+    const wRes = await fetch('/api/weight', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ weight_kg: w, logged_date: new Date().toISOString().slice(0, 10) }),
     });
+    if (wRes.status === 401) { window.location.href = '/login'; return; }
     setProfile(prev => prev ? { ...prev, weight_kg: w } : prev);
     setWeightInput('');
     showToast('Weight logged');
