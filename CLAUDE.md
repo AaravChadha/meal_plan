@@ -90,7 +90,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [x] 2.1.4 Quick-add buttons for frequently logged foods ✅
 
 #### 2.2 Daily Baseline (the stuff you eat every day)
-- [ ] 2.2.1 Create custom foods (e.g. "My protein shake", "Greek yogurt + granola") with nutrition info — saved per user in DB
+- [x] 2.2.1 Create custom foods (e.g. "My protein shake", "Greek yogurt + granola") with nutrition info — saved per user in DB ✅
 - [ ] 2.2.2 Baseline uses **slots** not fixed items — e.g. a "Yogurt" slot that can be filled by any of your custom yogurts. You eat yogurt every day but sometimes switch brands, so you pick which variant today
 - [ ] 2.2.3 Baseline section on profile page — add/remove/reorder slots, assign a default item to each slot
 - [ ] 2.2.4 Each slot shows a dropdown/search of your custom foods in that category — easy to swap between variants (e.g. Chobani vs Oikos vs store brand)
@@ -101,7 +101,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [ ] 2.2.9 Visual indicator showing how much of your daily target the baseline covers (e.g. "Baseline = 800 cal, 60g protein — 38% of your day done before dining court")
 
 #### 2.3 Food Log Enhancements
-- [ ] 2.3.1 All custom foods, combos, favorites, and baselines persist in DB (not code) — tied to user ID, survive restarts/deploys
+- [x] 2.3.1 All custom foods, combos, favorites, and baselines persist in DB (not code) — tied to user ID, survive restarts/deploys ✅
 - [ ] 2.3.2 Favorite foods — star items for quick access
 - [x] 2.3.3 Recent foods — show last 10 logged items at top of search ✅ (done in 2.1.4)
 - [ ] 2.3.4 Custom food entry — add your own foods with nutrition info

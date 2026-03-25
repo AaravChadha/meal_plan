@@ -842,8 +842,196 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* ── Daily Baseline ──────────────────────────────────── */}
+        <BaselineManager />
+
         {toast && <div className="toast success">✅ {toast}</div>}
       </div>
     </>
+  );
+}
+
+// ── Baseline Manager (self-contained) ──────────────────────────────
+interface BaselineSlot {
+  id: number;
+  slot_name: string;
+  default_food_id: number | null;
+  sort_order: number;
+  food_name: string | null;
+  brand: string | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
+  sodium_mg: number | null;
+}
+
+function BaselineManager() {
+  const [slots, setSlots] = useState<BaselineSlot[]>([]);
+  const [newSlotName, setNewSlotName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Record<string, unknown>[]>([]);
+  const [editingSlotId, setEditingSlotId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSlots = async () => {
+    const res = await fetch('/api/baseline');
+    const data = await res.json();
+    if (data.success) setSlots(data.data);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchSlots(); }, []);
+
+  const addSlot = async () => {
+    if (!newSlotName.trim()) return;
+    await fetch('/api/baseline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slot_name: newSlotName.trim() }),
+    });
+    setNewSlotName('');
+    fetchSlots();
+  };
+
+  const removeSlot = async (id: number) => {
+    await fetch(`/api/baseline?id=${id}`, { method: 'DELETE' });
+    fetchSlots();
+  };
+
+  const assignFood = async (slotId: number, foodId: number) => {
+    await fetch('/api/baseline', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: slotId, default_food_id: foodId }),
+    });
+    setEditingSlotId(null);
+    setSearchQuery('');
+    setSearchResults([]);
+    fetchSlots();
+  };
+
+  const searchFoods = async (q: string) => {
+    setSearchQuery(q);
+    if (q.length < 2) { setSearchResults([]); return; }
+    const res = await fetch(`/api/foods?q=${encodeURIComponent(q)}&source=local`);
+    const data = await res.json();
+    if (data.success) setSearchResults(data.data);
+  };
+
+  // Total baseline macros
+  const totalCal = slots.reduce((s, sl) => s + (sl.calories ?? 0), 0);
+  const totalP = slots.reduce((s, sl) => s + (sl.protein_g ?? 0), 0);
+  const totalC = slots.reduce((s, sl) => s + (sl.carbs_g ?? 0), 0);
+  const totalF = slots.reduce((s, sl) => s + (sl.fat_g ?? 0), 0);
+
+  if (loading) return <div className="card"><div className="loading-shimmer" style={{ height: 100 }} /></div>;
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <div>
+          <div className="card-title">Daily Baseline</div>
+          <div className="card-subtitle">Items you eat every day — check them off on the food log</div>
+        </div>
+      </div>
+
+      {/* Existing slots */}
+      {slots.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+          {slots.map(slot => (
+            <div key={slot.id} style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '10px 12px', borderRadius: 'var(--radius-sm)',
+              background: 'var(--bg-elevated)', border: '1px solid var(--border-primary)',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>{slot.slot_name}</div>
+                {slot.food_name ? (
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {slot.food_name} — {Math.round(slot.calories ?? 0)} cal, {Math.round(slot.protein_g ?? 0)}p/{Math.round(slot.carbs_g ?? 0)}c/{Math.round(slot.fat_g ?? 0)}f
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '12px', color: 'var(--accent-indigo)', marginTop: '2px' }}>No default item set — tap to assign</div>
+                )}
+
+                {/* Inline search when editing this slot */}
+                {editingSlotId === slot.id && (
+                  <div style={{ marginTop: '8px' }}>
+                    <input
+                      type="text" className="form-input" placeholder="Search foods..."
+                      value={searchQuery} onChange={e => searchFoods(e.target.value)}
+                      autoFocus style={{ fontSize: '12px', padding: '6px 10px' }}
+                    />
+                    {searchResults.length > 0 && (
+                      <div style={{
+                        maxHeight: '150px', overflow: 'auto', marginTop: '4px',
+                        border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)',
+                      }}>
+                        {searchResults.map((food: Record<string, unknown>, idx: number) => (
+                          <div key={idx}
+                            onClick={() => assignFood(slot.id, food.id as number)}
+                            style={{
+                              padding: '6px 10px', cursor: 'pointer', fontSize: '12px',
+                              borderBottom: '1px solid var(--border-primary)',
+                              display: 'flex', justifyContent: 'space-between',
+                            }}
+                            onMouseOver={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                            onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <span>{food.name as string}</span>
+                            <span style={{ color: 'var(--text-muted)' }}>{Math.round(food.calories as number)} cal</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button onClick={() => setEditingSlotId(editingSlotId === slot.id ? null : slot.id)}
+                style={{
+                  padding: '4px 10px', fontSize: '11px', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-primary)', background: 'none',
+                  color: 'var(--text-muted)', cursor: 'pointer',
+                }}>
+                {editingSlotId === slot.id ? 'Cancel' : 'Swap'}
+              </button>
+              <button onClick={() => removeSlot(slot.id)}
+                style={{
+                  padding: '4px 8px', fontSize: '11px', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid rgba(255,107,107,0.3)', background: 'rgba(255,107,107,0.08)',
+                  color: '#ff6b6b', cursor: 'pointer',
+                }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Baseline summary */}
+      {slots.length > 0 && totalCal > 0 && (
+        <div style={{
+          padding: '8px 12px', marginBottom: '12px',
+          background: 'rgba(99,102,241,0.06)', borderRadius: 'var(--radius-sm)',
+          fontSize: '12px', color: 'var(--text-secondary)',
+        }}>
+          Baseline covers <strong>{Math.round(totalCal)} cal</strong>, {Math.round(totalP)}g P / {Math.round(totalC)}g C / {Math.round(totalF)}g F
+        </div>
+      )}
+
+      {/* Add new slot */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <input
+          type="text" className="form-input" placeholder="Slot name (e.g. Yogurt, Protein Shake)"
+          value={newSlotName} onChange={e => setNewSlotName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && addSlot()}
+          style={{ flex: 1, fontSize: '13px' }}
+        />
+        <button onClick={addSlot} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
+          + Add Slot
+        </button>
+      </div>
+    </div>
   );
 }

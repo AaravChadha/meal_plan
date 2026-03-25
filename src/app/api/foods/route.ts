@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { getSessionUser } from '@/lib/auth';
 import { searchUSDA, searchOpenFoodFacts, ParsedFood } from '@/lib/usda';
 
 // GET /api/foods?q=chicken&source=all
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get('q') || '';
   const source = request.nextUrl.searchParams.get('source') || 'all';
+  const userId = getSessionUser(request);
 
   if (!q || q.length < 2) {
     return NextResponse.json({ success: true, data: [] });
@@ -14,16 +16,17 @@ export async function GET(request: NextRequest) {
   const db = getDb();
   let results: Record<string, unknown>[] = [];
 
-  // Search local database
+  // Search local database — show shared foods (user_id IS NULL) + user's own custom foods
   if (source === 'all' || source === 'local') {
     const localResults = db.prepare(`
       SELECT * FROM food_items
-      WHERE name LIKE ? OR brand LIKE ? OR category LIKE ?
+      WHERE (name LIKE ? OR brand LIKE ? OR category LIKE ?)
+        AND (user_id IS NULL OR user_id = ?)
       ORDER BY
         CASE WHEN name LIKE ? THEN 0 ELSE 1 END,
         name
       LIMIT 15
-    `).all(`%${q}%`, `%${q}%`, `%${q}%`, `${q}%`) as Record<string, unknown>[];
+    `).all(`%${q}%`, `%${q}%`, `%${q}%`, userId ?? -1, `${q}%`) as Record<string, unknown>[];
 
     results = localResults.map((r) => ({ ...r, source: 'local' }));
   }
@@ -44,9 +47,14 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ success: true, data: results });
 }
 
-// POST /api/foods — Add a custom food or save a USDA food locally
+// POST /api/foods — Add a custom food or save a USDA/OFF food locally
 export async function POST(request: NextRequest) {
   try {
+    const userId = getSessionUser(request);
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+    }
+
     const body = await request.json();
     const db = getDb();
 
@@ -58,9 +66,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Custom foods (is_custom=1) are tied to the user. External foods (USDA/OFF) are shared (user_id=NULL).
+    const isCustom = body.is_custom ?? 1;
+    const foodUserId = isCustom ? userId : null;
+
     const result = db.prepare(`
-      INSERT INTO food_items (name, brand, category, serving_size, serving_unit, calories, protein_g, carbs_g, fat_g, fiber_g, sugar_g, sodium_mg, cholesterol_mg, saturated_fat_g, fdc_id, is_custom)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO food_items (name, brand, category, serving_size, serving_unit, calories, protein_g, carbs_g, fat_g, fiber_g, sugar_g, sodium_mg, cholesterol_mg, saturated_fat_g, fdc_id, is_custom, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       body.name,
       body.brand || null,
@@ -77,7 +89,8 @@ export async function POST(request: NextRequest) {
       body.cholesterol_mg || 0,
       body.saturated_fat_g || 0,
       body.fdc_id || null,
-      body.is_custom ?? 1,
+      isCustom,
+      foodUserId,
     );
 
     return NextResponse.json({ success: true, data: { id: result.lastInsertRowid } });

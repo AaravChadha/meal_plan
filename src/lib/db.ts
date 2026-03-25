@@ -144,6 +144,22 @@ function initTables(db: Database.Database) {
   try { db.exec('ALTER TABLE users ADD COLUMN rest_target_sodium_mg REAL NOT NULL DEFAULT 2300'); } catch {}
   // Workout schedule: comma-separated day numbers (0=Mon, 1=Tue, ..., 6=Sun). Default Mon/Wed/Fri/Sun.
   try { db.exec("ALTER TABLE users ADD COLUMN workout_schedule TEXT NOT NULL DEFAULT '0,2,4,6'"); } catch {}
+  // Custom foods belong to a user. Shared foods (Purdue, common) have user_id = NULL.
+  try { db.exec('ALTER TABLE food_items ADD COLUMN user_id INTEGER REFERENCES users(id)'); } catch {}
+
+  // Baseline slots: daily items the user eats every day (e.g. yogurt, protein shake)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS baseline_slots (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      slot_name TEXT NOT NULL,
+      default_food_id INTEGER,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (default_food_id) REFERENCES food_items(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_baseline_slots ON baseline_slots(user_id, sort_order);
+  `);
 
   // No demo user seed — users register themselves
 
