@@ -133,28 +133,39 @@ export function generateSmartSuggestion(
   const calories = tdee + adjustment;
 
   // ── Protein ───────────────────────────────────────────────────────
-  // Same every day — MPS stays elevated 24-72h post-training, so daily
-  // total matters more than per-day timing (McGlory et al., 2017).
-  // Cut: 2.3-3.1 g/kg LBM or ~2.4 g/kg total BW (Helms et al., 2014)
+  // Workout days: higher protein for MPS + recovery
+  // Rest days: slightly lower — still above optimal threshold (>1.6g/kg),
+  // frees up calories for carbs (glycogen replenishment for next session)
+  // Cut: 2.3-3.1 g/kg LBM (Helms et al., 2014)
   // Maintain/Bulk: 1.6-2.2 g/kg (Morton et al., 2018; Jager et al., 2017)
   // Age 40+: +0.2 g/kg for anabolic resistance (Moore et al., 2015)
   // Use lean mass if known (more accurate), otherwise total body weight
   // with a lower multiplier since total BW overestimates for heavier people
   const protein_base = lean_mass_kg ?? weight_kg;
-  const protein_per_kg: Record<Goal, number> = lean_mass_kg
+  const protein_per_kg_workout: Record<Goal, number> = lean_mass_kg
     ? { cut: 2.4, maintain: 1.8, bulk: 1.8 }   // per kg lean mass
     : { cut: 2.2, maintain: 1.6, bulk: 1.6 };   // per kg total BW
+  const protein_per_kg_rest: Record<Goal, number> = lean_mass_kg
+    ? { cut: 2.2, maintain: 1.6, bulk: 1.6 }   // per kg lean mass
+    : { cut: 2.0, maintain: 1.4, bulk: 1.4 };   // per kg total BW
+  const protein_per_kg = isWorkoutDay ? protein_per_kg_workout : protein_per_kg_rest;
   const age_protein_bump = age >= 40 ? 0.2 : 0;
   const protein_g = Math.round(protein_base * (protein_per_kg[goal] + age_protein_bump));
 
   // ── Fat ─────────────────────────────────────────────────────────
-  // Based on body weight, not % of calories — body needs a minimum for
-  // hormones regardless of calorie target. Same grams both days.
-  // Cut: 0.7 g/kg, floor 0.5 men / 0.8 women (Helms 2014; Dorgan 1996)
-  // Maintain/Bulk: 1.0 g/kg (DGA 2020-2025)
-  const fat_per_kg: Record<Goal, number> = { cut: 0.7, maintain: 1.0, bulk: 1.0 };
+  // Based on body weight, not % of calories. Body needs a minimum for
+  // hormones (testosterone, etc.) — only tanks below ~0.5g/kg men, 0.8 women.
+  // Workout days: 0.7 g/kg (standard for cut)
+  // Rest days on cut: 0.55 g/kg — lower to free up calories for carbs
+  //   (glycogen replenishment for next workout matters more than extra fat)
+  //   Still above 0.5 floor so hormone production is safe.
+  // Maintain/Bulk: 1.0 g/kg both days (no need to restrict)
+  // Sources: Helms 2014, Dorgan 1996, DGA 2020-2025
+  const fat_per_kg_workout: Record<Goal, number> = { cut: 0.7, maintain: 1.0, bulk: 1.0 };
+  const fat_per_kg_rest: Record<Goal, number> = { cut: 0.55, maintain: 1.0, bulk: 1.0 };
+  const fat_per_kg_day = isWorkoutDay ? fat_per_kg_workout : fat_per_kg_rest;
   const fat_floor = gender === 'female' ? 0.8 : 0.5;
-  const fat_g = Math.round(weight_kg * Math.max(fat_per_kg[goal], fat_floor));
+  const fat_g = Math.round(weight_kg * Math.max(fat_per_kg_day[goal], fat_floor));
 
   // ── Carbs ───────────────────────────────────────────────────────
   // Fill remaining calories. Naturally higher on workout days (more

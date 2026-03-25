@@ -74,7 +74,7 @@ Get the existing app working correctly before adding anything new.
 - [x] 1.3.6 App auto-creates live DB from seed on first run if no live DB exists (for new users cloning the repo) ✅
 
 #### 1.4 Fix Data & Display
-- [ ] 1.4.1 Verify all nutrition formulas produce sensible numbers at user's stats (100kg, cut, 2500 TDEE)
+- [x] 1.4.1 Verify all nutrition formulas produce sensible numbers at user's stats (100kg, cut, 2500 TDEE) ✅
 - [ ] 1.4.2 Ensure Purdue dining items display properly in food search with "Purdue Dining" badge
 - [ ] 1.4.3 Test food log → summary → grades pipeline end-to-end
 
@@ -159,7 +159,13 @@ Fill in missing functionality and make the app actually usable day-to-day.
 - [ ] 2.11.4 Export food log, weight history, grades as CSV
 - [ ] 2.11.5 Shows you care about user data ownership (good for portfolio)
 
-#### 2.12 Polish & UX
+#### 2.12 Flexible Macro Suggestions
+- [ ] 2.12.1 Let users customize macro priority order (e.g. "Protein > Carbs > Fat" vs "Protein > Fat > Carbs") — currently hardcoded to Protein > Carbs > Fat on rest, Protein > Carbs > Fat on workout
+- [ ] 2.12.2 Adjustable protein/fat/carb ratios per day type — sliders or presets ("balanced", "high carb", "keto-ish")
+- [ ] 2.12.3 Adapt suggestions based on user's actual workout schedule (not just binary rest/workout — account for heavy leg day vs light cardio vs full rest)
+- [ ] 2.12.4 "What if" mode — preview how changing one macro target affects the others (since carbs fill remaining calories)
+
+#### 2.13 Polish & UX
 - [ ] 2.12.1 Loading states for all pages (skeleton screens, not blank)
 - [ ] 2.12.2 Error toasts when API calls fail
 - [ ] 2.12.3 Mobile-responsive CSS (usable on phone browser before native app)
