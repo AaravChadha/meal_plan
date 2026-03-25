@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Header, { localDate, formatLocalDate } from '@/components/Header';
 import {
   gradeDay, gradeCalibration,
-  GRADE_COLORS, scoreToGrade,
+  GRADE_COLORS,
   type DayGrade, type LetterGrade, type CalibrationReport,
 } from '@/lib/grades';
 import { generateSmartSuggestion, type ActivityLevel, type Goal, type Gender, type SmartSuggestion } from '@/lib/tdee';
@@ -452,7 +452,7 @@ export default function GradesPage() {
             (p.gender || 'neutral') as Gender,
             p.body_fat_pct,
             p.workout_burn ?? 400,
-            p.workout_deficit ?? -500,
+            undefined,       // use default recommended deficit, not user's custom
             p.custom_tdee,
           );
           setSuggestion(sugg);
