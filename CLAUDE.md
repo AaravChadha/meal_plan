@@ -253,7 +253,14 @@ Fine-tuned AI model that knows Purdue dining, your macros, and your preferences.
 - [ ] 4.2.5 Multiple suggestion styles — "high protein", "balanced", "I want comfort food but keep it reasonable"
 - [ ] 4.2.6 Learn from user — if they reject a suggestion or always pick certain foods, adapt over time
 
-#### 4.3 Smart Features
+#### 4.3 Privacy & IP Protection
+Keep the main repo PUBLIC (portfolio). AI-specific assets go in a SEPARATE PRIVATE repo or cloud storage.
+- [ ] 4.3.1 Create a private repo (e.g. `nutritrack-ai`) for training data, model weights, and evaluation scripts
+- [ ] 4.3.2 Store fine-tuned model on private cloud (HuggingFace private, S3, etc.) — main app calls it via API
+- [ ] 4.3.3 Add `/ai-data/` to `.gitignore` in main repo so training data never leaks to public
+- [ ] 4.3.4 The API endpoint code that calls the model stays in the public repo — it's just fetch calls, the model itself is private
+
+#### 4.4 Smart Features
 - [ ] 4.3.1 Meal planning for the week — given your workout/rest schedule, suggest dining court meals for each day
 - [ ] 4.3.2 "I already ate X for breakfast" → adjust lunch/dinner suggestions to balance macros
 - [ ] 4.3.3 Allergen/preference awareness — avoid foods user has flagged (vegetarian, no peanuts, etc.)
