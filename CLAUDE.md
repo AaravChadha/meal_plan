@@ -87,7 +87,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [x] 2.1.1 Workout/rest day toggle that switches which targets are shown for today ✅
 - [x] 2.1.2 Auto-suggest day type from weekly schedule (Mon/Wed/Fri/Sun = workout) ✅
 - [x] 2.1.3 Show today's grade live as you log food (updates with each entry) ✅
-- [ ] 2.1.4 Quick-add buttons for frequently logged foods
+- [x] 2.1.4 Quick-add buttons for frequently logged foods ✅
 
 #### 2.2 Daily Baseline (the stuff you eat every day)
 - [ ] 2.2.1 Create custom foods (e.g. "My protein shake", "Greek yogurt + granola") with nutrition info — saved per user in DB
