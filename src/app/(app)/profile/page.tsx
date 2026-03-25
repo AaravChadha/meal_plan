@@ -900,7 +900,21 @@ function BaselineManager() {
     fetchSlots();
   };
 
-  const assignFood = async (slotId: number, foodId: number) => {
+  const assignFood = async (slotId: number, food: Record<string, unknown>) => {
+    let foodId = food.id as number | null;
+
+    // If it's an external food (no local id), save it locally first
+    if (!foodId) {
+      const saveRes = await fetch('/api/foods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...food, is_custom: 0 }),
+      });
+      const saveData = await saveRes.json();
+      if (saveData.success) foodId = saveData.data.id;
+      else return;
+    }
+
     await fetch('/api/baseline', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -915,7 +929,7 @@ function BaselineManager() {
   const searchFoods = async (q: string) => {
     setSearchQuery(q);
     if (q.length < 2) { setSearchResults([]); return; }
-    const res = await fetch(`/api/foods?q=${encodeURIComponent(q)}&source=local`);
+    const res = await fetch(`/api/foods?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     if (data.success) setSearchResults(data.data);
   };
@@ -947,15 +961,18 @@ function BaselineManager() {
               background: 'var(--bg-elevated)', border: '1px solid var(--border-primary)',
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '13px', fontWeight: 600 }}>{slot.slot_name}</div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{slot.slot_name}</div>
                 {slot.food_name ? (
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    {slot.food_name} — {Math.round(slot.calories ?? 0)} cal, {Math.round(slot.protein_g ?? 0)}p/{Math.round(slot.carbs_g ?? 0)}c/{Math.round(slot.fat_g ?? 0)}f
+                  <div style={{ marginTop: '2px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600 }}>{slot.food_name}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
+                      {Math.round(slot.calories ?? 0)} cal · {Math.round(slot.protein_g ?? 0)}p/{Math.round(slot.carbs_g ?? 0)}c/{Math.round(slot.fat_g ?? 0)}f
+                    </span>
                   </div>
                 ) : (
-                  <div style={{ fontSize: '12px', color: 'var(--accent-indigo)', marginTop: '2px', cursor: 'pointer' }}
+                  <div style={{ fontSize: '13px', color: 'var(--accent-indigo)', marginTop: '2px', cursor: 'pointer' }}
                     onClick={() => setEditingSlotId(slot.id)}>
-                    No default item set — click to assign
+                    Click to assign a food
                   </div>
                 )}
 
@@ -974,7 +991,7 @@ function BaselineManager() {
                       }}>
                         {searchResults.map((food: Record<string, unknown>, idx: number) => (
                           <div key={idx}
-                            onClick={() => assignFood(slot.id, food.id as number)}
+                            onClick={() => assignFood(slot.id, food)}
                             style={{
                               padding: '6px 10px', cursor: 'pointer', fontSize: '12px',
                               borderBottom: '1px solid var(--border-primary)',
