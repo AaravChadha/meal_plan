@@ -130,9 +130,15 @@ Fill in missing functionality and make the app actually usable day-to-day.
 - [ ] 2.5.4 Include in daily grade as a bonus factor
 
 #### 2.6 Grades Improvements
-- [ ] 2.6.1 "Why did I get this grade?" breakdown — show exactly which macros pulled you up or down (e.g. "protein 40g short → dropped from A to B-")
-- [ ] 2.6.2 Grade trend chart — average grade over weeks/months, are you improving?
-- [ ] 2.6.3 Streak tracking — consecutive days of A/B grades, longest streak
+- [ ] 2.6.1 Asymmetric grading per nutrient — not all macros should penalize going over equally:
+  - **Protein**: over is GOOD up to ~150% of target (muscle preservation), under is bad
+  - **Fiber**: over is fine up to cap (~50g), under is bad
+  - **Carbs/Fat**: over is bad (extra calories), slightly under is ok on a cut
+  - **Calories**: over is bad on cut, slightly under is ok (already partially done in 1.1.4)
+  - **Sodium**: over is bad, under is fine
+- [ ] 2.6.2 "Why did I get this grade?" breakdown — show exactly which macros pulled you up or down (e.g. "protein 40g short → dropped from A to B-")
+- [ ] 2.6.3 Grade trend chart — average grade over weeks/months, are you improving?
+- [ ] 2.6.4 Streak tracking — consecutive days of A/B grades, longest streak
 
 #### 2.7 Comparison Table & Insights
 - [ ] 2.7.1 Visual workout vs rest day comparison table (side-by-side targets, color-coded)
