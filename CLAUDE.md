@@ -76,7 +76,7 @@ Get the existing app working correctly before adding anything new.
 #### 1.4 Fix Data & Display
 - [x] 1.4.1 Verify all nutrition formulas produce sensible numbers at user's stats (100kg, cut, 2500 TDEE) ✅
 - [x] 1.4.2 Ensure Purdue dining items display properly in food search with "Purdue Dining" badge ✅
-- [ ] 1.4.3 Test food log → summary → grades pipeline end-to-end
+- [x] 1.4.3 Test food log → summary → grades pipeline end-to-end ✅
 
 ---
 
