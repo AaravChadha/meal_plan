@@ -1079,69 +1079,64 @@ function BaselineManager() {
         border: '1px dashed var(--border-primary)', background: 'var(--bg-elevated)',
       }}>
         <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>Add baseline item</div>
-        <div style={{ display: 'flex', gap: '8px', marginBottom: newSlotName.trim() ? '8px' : 0 }}>
-          <input
-            type="text" className="form-input" placeholder="Slot name (e.g. Yogurt, Protein Shake)"
-            value={newSlotName} onChange={e => setNewSlotName(e.target.value)}
-            style={{ flex: 1, fontSize: '13px' }}
-          />
-        </div>
+        <input
+          type="text" className="form-input" placeholder="Slot name (e.g. Yogurt, Protein Shake)"
+          value={newSlotName} onChange={e => setNewSlotName(e.target.value)}
+          style={{ fontSize: '13px', marginBottom: '8px' }}
+        />
 
-        {/* Show food search once slot name is entered */}
-        {newSlotName.trim() && (
-          <div>
-            {newSlotFood ? (
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '8px 10px', borderRadius: 'var(--radius-sm)',
-                background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
-                marginBottom: '8px',
-              }}>
-                <div>
-                  <span style={{ fontSize: '13px', fontWeight: 600 }}>{newSlotFood.name as string}</span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
-                    {Math.round(newSlotFood.calories as number)} cal
-                  </span>
-                </div>
-                <button onClick={() => { setNewSlotFood(null); setNewSlotFoodQuery(''); setNewSlotFoodResults([]); }}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '14px' }}>✕</button>
+        {newSlotFood ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 10px', borderRadius: 'var(--radius-sm)',
+            background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
+            marginBottom: '8px',
+          }}>
+            <div>
+              <span style={{ fontSize: '13px', fontWeight: 600 }}>{newSlotFood.name as string}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
+                {Math.round(newSlotFood.calories as number)} cal
+              </span>
+            </div>
+            <button onClick={() => { setNewSlotFood(null); setNewSlotFoodQuery(''); setNewSlotFoodResults([]); }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '14px' }}>✕</button>
+          </div>
+        ) : (
+          <input
+            type="text" className="form-input" placeholder="Search for a food to assign..."
+            value={newSlotFoodQuery} onChange={e => searchNewSlotFoods(e.target.value)}
+            style={{ fontSize: '13px', marginBottom: newSlotFoodResults.length > 0 ? '4px' : '8px' }}
+          />
+        )}
+
+        {newSlotFoodResults.length > 0 && (
+          <div style={{
+            maxHeight: '150px', overflow: 'auto', marginBottom: '8px',
+            border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)',
+          }}>
+            {newSlotFoodResults.map((food: Record<string, unknown>, idx: number) => (
+              <div key={idx}
+                onClick={() => { setNewSlotFood(food); setNewSlotFoodQuery(''); setNewSlotFoodResults([]); }}
+                style={{
+                  padding: '6px 10px', cursor: 'pointer', fontSize: '12px',
+                  borderBottom: '1px solid var(--border-primary)',
+                  display: 'flex', justifyContent: 'space-between',
+                }}
+                onMouseOver={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span>{food.name as string}</span>
+                <span style={{ color: 'var(--text-muted)' }}>{Math.round(food.calories as number)} cal</span>
               </div>
-            ) : (
-              <>
-                <input
-                  type="text" className="form-input" placeholder="Search for a food to assign..."
-                  value={newSlotFoodQuery} onChange={e => searchNewSlotFoods(e.target.value)}
-                  style={{ fontSize: '12px', padding: '6px 10px', marginBottom: newSlotFoodResults.length > 0 ? '4px' : '8px' }}
-                />
-                {newSlotFoodResults.length > 0 && (
-                  <div style={{
-                    maxHeight: '150px', overflow: 'auto', marginBottom: '8px',
-                    border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)',
-                  }}>
-                    {newSlotFoodResults.map((food: Record<string, unknown>, idx: number) => (
-                      <div key={idx}
-                        onClick={() => { setNewSlotFood(food); setNewSlotFoodQuery(''); setNewSlotFoodResults([]); }}
-                        style={{
-                          padding: '6px 10px', cursor: 'pointer', fontSize: '12px',
-                          borderBottom: '1px solid var(--border-primary)',
-                          display: 'flex', justifyContent: 'space-between',
-                        }}
-                        onMouseOver={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
-                        onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
-                      >
-                        <span>{food.name as string}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>{Math.round(food.calories as number)} cal</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            <button onClick={addSlot} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', fontSize: '13px' }}>
-              + Add {newSlotName.trim()}
-            </button>
+            ))}
           </div>
         )}
+
+        <button onClick={addSlot} className="btn btn-primary"
+          disabled={!newSlotName.trim()}
+          style={{ width: '100%', justifyContent: 'center', fontSize: '13px', opacity: newSlotName.trim() ? 1 : 0.5 }}>
+          + Add{newSlotName.trim() ? ` ${newSlotName.trim()}` : ' Slot'}
+        </button>
       </div>
     </div>
   );
