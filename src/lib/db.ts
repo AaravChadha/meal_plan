@@ -142,6 +142,8 @@ function initTables(db: Database.Database) {
   try { db.exec('ALTER TABLE users ADD COLUMN rest_target_fat_g REAL NOT NULL DEFAULT 65'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN rest_target_fiber_g REAL NOT NULL DEFAULT 30'); } catch {}
   try { db.exec('ALTER TABLE users ADD COLUMN rest_target_sodium_mg REAL NOT NULL DEFAULT 2300'); } catch {}
+  // Workout schedule: comma-separated day numbers (0=Mon, 1=Tue, ..., 6=Sun). Default Mon/Wed/Fri/Sun.
+  try { db.exec("ALTER TABLE users ADD COLUMN workout_schedule TEXT NOT NULL DEFAULT '0,2,4,6'"); } catch {}
 
   // No demo user seed — users register themselves
 

@@ -61,6 +61,7 @@ export default function Dashboard() {
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [dayType, setDayType] = useState<'rest' | 'training'>('training');
+  const [dayTypeSource, setDayTypeSource] = useState<'schedule' | 'manual'>('schedule');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -77,7 +78,10 @@ export default function Dashboard() {
 
       if (summaryData.success) setSummary(summaryData.data);
       if (mealsData.success) setMeals(mealsData.data);
-      if (dayTypeData.success) setDayType(dayTypeData.data.day_type);
+      if (dayTypeData.success) {
+        setDayType(dayTypeData.data.day_type);
+        setDayTypeSource(dayTypeData.data.source ?? 'schedule');
+      }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
@@ -88,6 +92,7 @@ export default function Dashboard() {
   const handleToggleDayType = async () => {
     const newType = dayType === 'training' ? 'rest' : 'training';
     setDayType(newType);
+    setDayTypeSource('manual');
     const dtRes = await fetch('/api/day-type', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -182,7 +187,10 @@ export default function Dashboard() {
               border: '1px solid var(--border-primary)',
             }}>
               <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                {dayType === 'training' ? '🏋️ Workout Day' : '😴 Rest Day'} — targets adjust automatically
+                {dayType === 'training' ? '🏋️ Workout Day' : '😴 Rest Day'}
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '6px' }}>
+                  {dayTypeSource === 'schedule' ? '(from schedule)' : '(manual override)'}
+                </span>
               </span>
               <button
                 onClick={handleToggleDayType}

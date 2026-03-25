@@ -39,6 +39,7 @@ export async function PUT(request: NextRequest) {
       'target_fiber_g', 'target_sodium_mg',
       'rest_target_calories', 'rest_target_protein_g', 'rest_target_carbs_g',
       'rest_target_fat_g', 'rest_target_fiber_g', 'rest_target_sodium_mg',
+      'workout_schedule',
     ];
 
     const updates: string[] = [];

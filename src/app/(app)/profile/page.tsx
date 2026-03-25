@@ -50,6 +50,7 @@ interface UserProfile {
   rest_deficit: number;
   workout_deficit: number;
   custom_tdee: number | null;
+  workout_schedule: string;
   goal: string;
   gender: string;
   body_fat_pct: number | null;
@@ -163,6 +164,7 @@ export default function ProfilePage() {
           activity_level: profile.activity_level,
           rest_activity_level: profile.rest_activity_level,
           workout_burn: profile.workout_burn,
+          workout_schedule: profile.workout_schedule,
           rest_deficit: profile.rest_deficit,
           workout_deficit: profile.workout_deficit,
           custom_tdee: profile.custom_tdee,
@@ -421,6 +423,36 @@ export default function ProfilePage() {
                   min="0" max="1500" step="50" placeholder="e.g. 400" />
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
                   Estimated calories burned during a workout. Check your watch or use ~300 light, ~400 moderate, ~600 intense.
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Weekly Workout Schedule</label>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
+                    const schedule = (profile.workout_schedule ?? '0,2,4,6').split(',').map(Number);
+                    const isActive = schedule.includes(i);
+                    return (
+                      <button key={day} type="button" onClick={() => {
+                        const newSchedule = isActive
+                          ? schedule.filter(d => d !== i)
+                          : [...schedule, i].sort();
+                        setProfile({ ...profile, workout_schedule: newSchedule.join(',') });
+                      }} style={{
+                        flex: 1, padding: '8px 0', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 700,
+                        cursor: 'pointer', border: '2px solid',
+                        borderColor: isActive ? 'var(--accent-indigo)' : 'var(--border-primary)',
+                        background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
+                        color: isActive ? 'var(--accent-indigo)' : 'var(--text-muted)',
+                        transition: 'all 0.15s',
+                      }}>
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                  Select your workout days. The dashboard auto-sets rest/training based on this schedule. You can still override any day manually.
                 </div>
               </div>
 
