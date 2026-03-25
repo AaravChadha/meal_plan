@@ -173,7 +173,17 @@ Fill in missing functionality and make the app actually usable day-to-day.
 - [ ] 2.12.3 Adapt suggestions based on user's actual workout schedule (not just binary rest/workout — account for heavy leg day vs light cardio vs full rest)
 - [ ] 2.12.4 "What if" mode — preview how changing one macro target affects the others (since carbs fill remaining calories)
 
-#### 2.13 Polish & UX
+#### 2.13 Goal-Aware UX (not just cut)
+The app currently works for all goals in formulas but the UX/tips/grading are cut-biased. Fix so bulk and maintain users get an equally good experience.
+- [ ] 2.13.1 Profile recommendations: surplus display for bulk (show "TDEE + surplus = target" not "TDEE − deficit"), maintain shows "eating at TDEE"
+- [ ] 2.13.2 Grading for bulk: penalize being UNDER calories (you need the surplus), reward hitting/slightly exceeding. Opposite of cut logic.
+- [ ] 2.13.3 Grading for maintain: symmetric — penalize going too far over OR under equally
+- [ ] 2.13.4 Tips and advice adapt to goal — bulk tips about eating enough, not "you're in a deficit"
+- [ ] 2.13.5 Rest vs workout day for bulk: workout days might have slightly more carbs (fuel), rest days slightly more than cut rest days since you're in surplus
+- [ ] 2.13.6 Dashboard messaging: "X cal remaining" on cut, "X cal left to hit surplus" on bulk, "on track" for maintain
+- [ ] 2.13.7 Test full flow for a bulk user and a maintain user end-to-end (register, set goal, log food, check grades)
+
+#### 2.14 Polish & UX
 - [ ] 2.12.1 Loading states for all pages (skeleton screens, not blank)
 - [ ] 2.12.2 Error toasts when API calls fail
 - [ ] 2.12.3 Mobile-responsive CSS (usable on phone browser before native app)
