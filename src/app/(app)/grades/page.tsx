@@ -32,6 +32,7 @@ interface Profile {
   rest_target_fat_g: number;
   rest_target_fiber_g: number;
   rest_target_sodium_mg: number;
+  custom_tdee: number | null;
 }
 
 // ── Small reusable grade badge ────────────────────────────────────────
@@ -450,6 +451,9 @@ export default function GradesPage() {
             p.goal as Goal,
             (p.gender || 'neutral') as Gender,
             p.body_fat_pct,
+            p.workout_burn ?? 400,
+            p.workout_deficit ?? -500,
+            p.custom_tdee,
           );
           setSuggestion(sugg);
           setCalibration(gradeCalibration(
