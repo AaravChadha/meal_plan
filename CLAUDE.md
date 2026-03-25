@@ -85,7 +85,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 
 #### 2.1 Dashboard Improvements
 - [x] 2.1.1 Workout/rest day toggle that switches which targets are shown for today ✅
-- [ ] 2.1.2 Auto-suggest day type from weekly schedule (Mon/Wed/Fri/Sun = workout)
+- [x] 2.1.2 Auto-suggest day type from weekly schedule (Mon/Wed/Fri/Sun = workout) ✅
 - [ ] 2.1.3 Show today's grade live as you log food (updates with each entry)
 - [ ] 2.1.4 Quick-add buttons for frequently logged foods
 

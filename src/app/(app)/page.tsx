@@ -5,6 +5,7 @@ import Header, { localDate } from '@/components/Header';
 import NutrientProgress from '@/components/NutrientProgress';
 import MacroPieChart from '@/components/MacroPieChart';
 import { NUTRIENTS } from '@/lib/nutrients';
+import { gradeDay, GRADE_COLORS, type DayGrade } from '@/lib/grades';
 
 interface MealEntry {
   id: number;
@@ -62,25 +63,39 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [dayType, setDayType] = useState<'rest' | 'training'>('training');
   const [dayTypeSource, setDayTypeSource] = useState<'schedule' | 'manual'>('schedule');
+  const [liveGrade, setLiveGrade] = useState<DayGrade | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [summaryRes, mealsRes, dayTypeRes] = await Promise.all([
+      const [summaryRes, mealsRes, dayTypeRes, profileRes] = await Promise.all([
         fetch(`/api/summary?date=${date}`),
         fetch(`/api/food-log?date=${date}`),
         fetch(`/api/day-type?date=${date}`),
+        fetch('/api/profile'),
       ]);
       if (summaryRes.status === 401 || mealsRes.status === 401 || dayTypeRes.status === 401) { window.location.href = '/login'; return; }
       const summaryData = await summaryRes.json();
       const mealsData = await mealsRes.json();
       const dayTypeData = await dayTypeRes.json();
+      const profileData = await profileRes.json();
 
       if (summaryData.success) setSummary(summaryData.data);
       if (mealsData.success) setMeals(mealsData.data);
       if (dayTypeData.success) {
         setDayType(dayTypeData.data.day_type);
         setDayTypeSource(dayTypeData.data.source ?? 'schedule');
+      }
+
+      // Compute live grade from summary
+      if (summaryData.success && summaryData.data.targets) {
+        const s = summaryData.data;
+        const grade = gradeDay(
+          { ...s, date },
+          s.targets,
+          profileData.success ? profileData.data.goal : 'cut',
+        );
+        setLiveGrade(grade);
       }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -222,6 +237,23 @@ export default function Dashboard() {
 
             {/* Stats Grid */}
             <div className="stats-grid">
+              {/* Live Grade */}
+              {liveGrade && liveGrade.logged_anything && (
+                <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="stat-label">Today&apos;s Grade</div>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: '50%',
+                    background: GRADE_COLORS[liveGrade.overall_grade] + '22',
+                    border: `3px solid ${GRADE_COLORS[liveGrade.overall_grade]}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: 800, fontSize: 22, color: GRADE_COLORS[liveGrade.overall_grade],
+                    margin: '4px 0',
+                  }}>
+                    {liveGrade.overall_grade}
+                  </div>
+                  <div className="stat-target">{liveGrade.overall_score}/100</div>
+                </div>
+              )}
               <div className="stat-card calories">
                 <div className="stat-label">Calories</div>
                 <div className="stat-value" style={{ color: 'var(--color-calories)' }}>
