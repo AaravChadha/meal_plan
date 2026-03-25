@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/Header';
+import Header, { localDate, formatLocalDate } from '@/components/Header';
 import TrendChart from '@/components/TrendChart';
 import MacroPieChart from '@/components/MacroPieChart';
 
@@ -16,7 +16,7 @@ interface DaySummary {
 }
 
 export default function AnalyticsPage() {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localDate());
   const [range, setRange] = useState<'7' | '14' | '30'>('7');
   const [data, setData] = useState<DaySummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ export default function AnalyticsPage() {
       const end = date;
       const startDate = new Date(date + 'T00:00:00');
       startDate.setDate(startDate.getDate() - parseInt(range) + 1);
-      const start = startDate.toISOString().slice(0, 10);
+      const start = formatLocalDate(startDate);
 
       try {
         const res = await fetch(`/api/summary?start=${start}&end=${end}`);

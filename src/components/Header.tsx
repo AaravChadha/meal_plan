@@ -1,5 +1,15 @@
 'use client';
 
+/** Returns today's date as YYYY-MM-DD in the user's local timezone */
+export function localDate(): string {
+  return new Date().toLocaleDateString('en-CA'); // en-CA = YYYY-MM-DD
+}
+
+/** Formats a Date object as YYYY-MM-DD in local timezone */
+export function formatLocalDate(d: Date): string {
+  return d.toLocaleDateString('en-CA');
+}
+
 interface HeaderProps {
   title: string;
   date: string;
@@ -10,10 +20,10 @@ export default function Header({ title, date, onDateChange }: HeaderProps) {
   const changeDate = (days: number) => {
     const d = new Date(date + 'T00:00:00');
     d.setDate(d.getDate() + days);
-    onDateChange(d.toISOString().slice(0, 10));
+    onDateChange(formatLocalDate(d));
   };
 
-  const isToday = date === new Date().toISOString().slice(0, 10);
+  const isToday = date === localDate();
 
   return (
     <header className="header">
@@ -43,7 +53,7 @@ export default function Header({ title, date, onDateChange }: HeaderProps) {
         {!isToday && (
           <button
             className="btn btn-sm btn-secondary"
-            onClick={() => onDateChange(new Date().toISOString().slice(0, 10))}
+            onClick={() => onDateChange(localDate())}
           >
             Today
           </button>

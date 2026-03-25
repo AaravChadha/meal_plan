@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/Header';
+import Header, { localDate, formatLocalDate } from '@/components/Header';
 import {
   gradeDay, gradeCalibration,
   GRADE_COLORS, scoreToGrade,
@@ -386,7 +386,7 @@ function GradingRubric({ goal }: { goal: string }) {
 
 // ── Main page ─────────────────────────────────────────────────────────
 export default function GradesPage() {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localDate());
   const [todayGrade, setTodayGrade] = useState<DayGrade | null>(null);
   const [weekGrades, setWeekGrades] = useState<DayGrade[]>([]);
   const [calibration, setCalibration] = useState<CalibrationReport | null>(null);
@@ -415,7 +415,7 @@ export default function GradesPage() {
         const endDate = date;
         const startDate = new Date(date + 'T00:00:00');
         startDate.setDate(startDate.getDate() - 6);
-        const start = startDate.toISOString().slice(0, 10);
+        const start = formatLocalDate(startDate);
         const weekRes = await fetch(`/api/summary?start=${start}&end=${endDate}`);
         if (weekRes.status === 401) { window.location.href = '/login'; return; }
         const weekData = await weekRes.json();

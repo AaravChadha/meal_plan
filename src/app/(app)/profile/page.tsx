@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import Header from '@/components/Header';
+import Header, { localDate } from '@/components/Header';
 import { generateSmartSuggestion, BASE_ACTIVITY_LABELS, GOAL_LABELS, ActivityLevel, Goal, Gender } from '@/lib/tdee';
 
 // ── Small inline unit toggle button ────────────────────────────────
@@ -68,7 +68,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localDate());
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -251,7 +251,7 @@ export default function ProfilePage() {
     const wRes = await fetch('/api/weight', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ weight_kg: w, logged_date: new Date().toISOString().slice(0, 10) }),
+      body: JSON.stringify({ weight_kg: w, logged_date: localDate() }),
     });
     if (wRes.status === 401) { window.location.href = '/login'; return; }
     setProfile(prev => prev ? { ...prev, weight_kg: w } : prev);

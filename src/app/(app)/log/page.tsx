@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Header from '@/components/Header';
+import Header, { localDate } from '@/components/Header';
 import FoodSearch from '@/components/FoodSearch';
 
 interface FoodResult {
@@ -69,7 +69,7 @@ const EMPTY_CUSTOM_FOOD = {
 };
 
 export default function FoodLogPage() {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localDate());
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [selectedMealType, setSelectedMealType] = useState('breakfast');
   const [selectedFood, setSelectedFood] = useState<FoodResult | null>(null);

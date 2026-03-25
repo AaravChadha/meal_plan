@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Header from '@/components/Header';
+import Header, { localDate } from '@/components/Header';
 import NutrientProgress from '@/components/NutrientProgress';
 import MacroPieChart from '@/components/MacroPieChart';
 import { NUTRIENTS } from '@/lib/nutrients';
@@ -56,7 +56,7 @@ const MEAL_LABELS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localDate());
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [loading, setLoading] = useState(true);
