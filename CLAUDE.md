@@ -86,7 +86,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 #### 2.1 Dashboard Improvements
 - [x] 2.1.1 Workout/rest day toggle that switches which targets are shown for today ✅
 - [x] 2.1.2 Auto-suggest day type from weekly schedule (Mon/Wed/Fri/Sun = workout) ✅
-- [ ] 2.1.3 Show today's grade live as you log food (updates with each entry)
+- [x] 2.1.3 Show today's grade live as you log food (updates with each entry) ✅
 - [ ] 2.1.4 Quick-add buttons for frequently logged foods
 
 #### 2.2 Daily Baseline (the stuff you eat every day)
@@ -120,7 +120,8 @@ The minimum features needed to actually use this app for daily nutrition trackin
   - **Calories**: over is bad on cut, slightly under is ok (already partially done in 1.1.4)
   - **Sodium**: over is bad, under is fine
 - [ ] 2.4.2 "Why did I get this grade?" breakdown — show exactly which macros pulled you up or down (e.g. "protein 40g short → dropped from A to B-")
-- [ ] 2.4.3 Grade trend chart — average grade over weeks/months, are you improving?
+- [ ] 2.4.3 Time-aware grading — toggle between "so far" (scales targets to current time of day, e.g. at 2pm only judge against ~60% of daily targets) and "full day" (current behavior). Default to "so far" on today, "full day" on past dates. This way you see a realistic grade throughout the day instead of F until dinner.
+- [ ] 2.4.4 Grade trend chart — average grade over weeks/months, are you improving?
 - [ ] 2.4.4 Streak tracking — consecutive days of A/B grades, longest streak
 
 #### 2.5 Input UX Fixes
