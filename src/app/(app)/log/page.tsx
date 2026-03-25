@@ -73,7 +73,7 @@ export default function FoodLogPage() {
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [selectedMealType, setSelectedMealType] = useState('breakfast');
   const [selectedFood, setSelectedFood] = useState<FoodResult | null>(null);
-  const [servings, setServings] = useState(1);
+  const [servings, setServings] = useState<number | ''>(1);
   const [showModal, setShowModal] = useState(false);
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customFood, setCustomFood] = useState({ ...EMPTY_CUSTOM_FOOD });
@@ -128,7 +128,7 @@ export default function FoodLogPage() {
         body: JSON.stringify({
           food_item_id: foodItemId,
           meal_type: selectedMealType,
-          servings,
+          servings: servings || 1,
           logged_date: date,
         }),
       });
@@ -210,15 +210,25 @@ export default function FoodLogPage() {
   const updateCustomField = (field: string, value: string) => {
     const numFields = ['serving_size', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g', 'sugar_g', 'sodium_mg', 'cholesterol_mg', 'saturated_fat_g'];
     if (numFields.includes(field)) {
-      setCustomFood(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
+      setCustomFood(prev => ({ ...prev, [field]: value === '' ? '' : parseFloat(value) }));
     } else {
       setCustomFood(prev => ({ ...prev, [field]: value }));
     }
   };
 
+  const blurCustomField = (field: string, min: number = 0) => {
+    setCustomFood(prev => {
+      const val = prev[field as keyof typeof prev];
+      if (val === '' || val === null || val === undefined || (typeof val === 'number' && isNaN(val))) {
+        return { ...prev, [field]: min };
+      }
+      return prev;
+    });
+  };
+
   // Auto-calculate calories from macros
   const autoCalcCalories = () => {
-    const cal = Math.round(customFood.protein_g * 4 + customFood.carbs_g * 4 + customFood.fat_g * 9);
+    const cal = Math.round((Number(customFood.protein_g) || 0) * 4 + (Number(customFood.carbs_g) || 0) * 4 + (Number(customFood.fat_g) || 0) * 9);
     setCustomFood(prev => ({ ...prev, calories: cal }));
   };
 
@@ -341,25 +351,25 @@ export default function FoodLogPage() {
               <div className="modal-food-preview">
                 <div className="modal-food-stat">
                   <div className="modal-food-stat-value" style={{ color: 'var(--color-calories)' }}>
-                    {Math.round(selectedFood.calories * servings)}
+                    {Math.round(selectedFood.calories * (servings || 0))}
                   </div>
                   <div className="modal-food-stat-label">Calories</div>
                 </div>
                 <div className="modal-food-stat">
                   <div className="modal-food-stat-value" style={{ color: 'var(--color-protein)' }}>
-                    {Math.round(selectedFood.protein_g * servings)}g
+                    {Math.round(selectedFood.protein_g * (servings || 0))}g
                   </div>
                   <div className="modal-food-stat-label">Protein</div>
                 </div>
                 <div className="modal-food-stat">
                   <div className="modal-food-stat-value" style={{ color: 'var(--color-carbs)' }}>
-                    {Math.round(selectedFood.carbs_g * servings)}g
+                    {Math.round(selectedFood.carbs_g * (servings || 0))}g
                   </div>
                   <div className="modal-food-stat-label">Carbs</div>
                 </div>
                 <div className="modal-food-stat">
                   <div className="modal-food-stat-value" style={{ color: 'var(--color-fat)' }}>
-                    {Math.round(selectedFood.fat_g * servings)}g
+                    {Math.round(selectedFood.fat_g * (servings || 0))}g
                   </div>
                   <div className="modal-food-stat-label">Fat</div>
                 </div>
@@ -385,7 +395,8 @@ export default function FoodLogPage() {
                     type="number"
                     className="form-input"
                     value={servings}
-                    onChange={(e) => setServings(Math.max(0.25, parseFloat(e.target.value) || 0.25))}
+                    onChange={(e) => setServings(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    onBlur={() => { if (!servings || servings < 0.25) setServings(1); }}
                     min="0.25"
                     step="0.25"
                   />
@@ -441,6 +452,7 @@ export default function FoodLogPage() {
                     className="form-input"
                     value={customFood.serving_size}
                     onChange={(e) => updateCustomField('serving_size', e.target.value)}
+                    onBlur={() => blurCustomField('serving_size', 1)}
                     min="1"
                   />
                 </div>
@@ -484,6 +496,7 @@ export default function FoodLogPage() {
                   className="form-input"
                   value={customFood.calories}
                   onChange={(e) => updateCustomField('calories', e.target.value)}
+                  onBlur={() => blurCustomField('calories')}
                   min="0"
                 />
               </div>
@@ -491,22 +504,22 @@ export default function FoodLogPage() {
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label" style={{ color: 'var(--color-protein)' }}>Protein (g)</label>
-                  <input type="number" className="form-input" value={customFood.protein_g} onChange={(e) => updateCustomField('protein_g', e.target.value)} min="0" step="0.1" />
+                  <input type="number" className="form-input" value={customFood.protein_g} onChange={(e) => updateCustomField('protein_g', e.target.value)} onBlur={() => blurCustomField('protein_g')} min="0" step="0.1" />
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ color: 'var(--color-carbs)' }}>Carbs (g)</label>
-                  <input type="number" className="form-input" value={customFood.carbs_g} onChange={(e) => updateCustomField('carbs_g', e.target.value)} min="0" step="0.1" />
+                  <input type="number" className="form-input" value={customFood.carbs_g} onChange={(e) => updateCustomField('carbs_g', e.target.value)} onBlur={() => blurCustomField('carbs_g')} min="0" step="0.1" />
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label" style={{ color: 'var(--color-fat)' }}>Fat (g)</label>
-                  <input type="number" className="form-input" value={customFood.fat_g} onChange={(e) => updateCustomField('fat_g', e.target.value)} min="0" step="0.1" />
+                  <input type="number" className="form-input" value={customFood.fat_g} onChange={(e) => updateCustomField('fat_g', e.target.value)} onBlur={() => blurCustomField('fat_g')} min="0" step="0.1" />
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ color: 'var(--color-fiber)' }}>Fiber (g)</label>
-                  <input type="number" className="form-input" value={customFood.fiber_g} onChange={(e) => updateCustomField('fiber_g', e.target.value)} min="0" step="0.1" />
+                  <input type="number" className="form-input" value={customFood.fiber_g} onChange={(e) => updateCustomField('fiber_g', e.target.value)} onBlur={() => blurCustomField('fiber_g')} min="0" step="0.1" />
                 </div>
               </div>
 
@@ -517,22 +530,22 @@ export default function FoodLogPage() {
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Sugar (g)</label>
-                  <input type="number" className="form-input" value={customFood.sugar_g} onChange={(e) => updateCustomField('sugar_g', e.target.value)} min="0" step="0.1" />
+                  <input type="number" className="form-input" value={customFood.sugar_g} onChange={(e) => updateCustomField('sugar_g', e.target.value)} onBlur={() => blurCustomField('sugar_g')} min="0" step="0.1" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Sodium (mg)</label>
-                  <input type="number" className="form-input" value={customFood.sodium_mg} onChange={(e) => updateCustomField('sodium_mg', e.target.value)} min="0" />
+                  <input type="number" className="form-input" value={customFood.sodium_mg} onChange={(e) => updateCustomField('sodium_mg', e.target.value)} onBlur={() => blurCustomField('sodium_mg')} min="0" />
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Cholesterol (mg)</label>
-                  <input type="number" className="form-input" value={customFood.cholesterol_mg} onChange={(e) => updateCustomField('cholesterol_mg', e.target.value)} min="0" />
+                  <input type="number" className="form-input" value={customFood.cholesterol_mg} onChange={(e) => updateCustomField('cholesterol_mg', e.target.value)} onBlur={() => blurCustomField('cholesterol_mg')} min="0" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Saturated Fat (g)</label>
-                  <input type="number" className="form-input" value={customFood.saturated_fat_g} onChange={(e) => updateCustomField('saturated_fat_g', e.target.value)} min="0" step="0.1" />
+                  <input type="number" className="form-input" value={customFood.saturated_fat_g} onChange={(e) => updateCustomField('saturated_fat_g', e.target.value)} onBlur={() => blurCustomField('saturated_fat_g')} min="0" step="0.1" />
                 </div>
               </div>
 
@@ -551,19 +564,19 @@ export default function FoodLogPage() {
               {customFood.name && (
                 <div className="modal-food-preview" style={{ marginBottom: 0, marginTop: '8px' }}>
                   <div className="modal-food-stat">
-                    <div className="modal-food-stat-value" style={{ color: 'var(--color-calories)' }}>{customFood.calories}</div>
+                    <div className="modal-food-stat-value" style={{ color: 'var(--color-calories)' }}>{customFood.calories || 0}</div>
                     <div className="modal-food-stat-label">Calories</div>
                   </div>
                   <div className="modal-food-stat">
-                    <div className="modal-food-stat-value" style={{ color: 'var(--color-protein)' }}>{customFood.protein_g}g</div>
+                    <div className="modal-food-stat-value" style={{ color: 'var(--color-protein)' }}>{customFood.protein_g || 0}g</div>
                     <div className="modal-food-stat-label">Protein</div>
                   </div>
                   <div className="modal-food-stat">
-                    <div className="modal-food-stat-value" style={{ color: 'var(--color-carbs)' }}>{customFood.carbs_g}g</div>
+                    <div className="modal-food-stat-value" style={{ color: 'var(--color-carbs)' }}>{customFood.carbs_g || 0}g</div>
                     <div className="modal-food-stat-label">Carbs</div>
                   </div>
                   <div className="modal-food-stat">
-                    <div className="modal-food-stat-value" style={{ color: 'var(--color-fat)' }}>{customFood.fat_g}g</div>
+                    <div className="modal-food-stat-value" style={{ color: 'var(--color-fat)' }}>{customFood.fat_g || 0}g</div>
                     <div className="modal-food-stat-label">Fat</div>
                   </div>
                 </div>

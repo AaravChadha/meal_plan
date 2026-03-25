@@ -309,8 +309,9 @@ export default function ProfilePage() {
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Age</label>
-                  <input type="number" className="form-input" value={profile.age || ''}
-                    onChange={e => setProfile({ ...profile, age: parseInt(e.target.value) || null })}
+                  <input type="number" className="form-input" value={profile.age ?? ''}
+                    onChange={e => setProfile({ ...profile, age: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    onBlur={() => { if (profile.age !== null && (isNaN(profile.age) || profile.age < 10)) setProfile({ ...profile, age: null }); }}
                     min="10" max="120" />
                 </div>
                 <div className="form-group">
@@ -333,8 +334,8 @@ export default function ProfilePage() {
                   </div>
                   <input type="number" className="form-input" value={displayWeight}
                     onChange={e => {
+                      if (e.target.value === '') { setProfile({ ...profile, weight_kg: null }); return; }
                       const val = parseFloat(e.target.value);
-                      if (!val) { setProfile({ ...profile, weight_kg: null }); return; }
                       setProfile({ ...profile, weight_kg: weightUnit === 'lbs' ? lbsToKg(val) : val });
                     }}
                     min={weightUnit === 'lbs' ? 44 : 20}
@@ -350,20 +351,22 @@ export default function ProfilePage() {
                   </div>
                   {heightUnit === 'cm' ? (
                     <input type="number" className="form-input" value={displayHeightCm}
-                      onChange={e => setProfile({ ...profile, height_cm: parseFloat(e.target.value) || null })}
+                      onChange={e => setProfile({ ...profile, height_cm: e.target.value === '' ? null : parseFloat(e.target.value) })}
                       min="100" max="250" step="0.1" placeholder="e.g. 175" />
                   ) : (
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input type="number" className="form-input" value={displayHeightFtIn.feet}
                         onChange={e => {
-                          const ft = parseInt(e.target.value) || 0;
+                          if (e.target.value === '') { setProfile({ ...profile, height_cm: null }); return; }
+                          const ft = parseInt(e.target.value);
                           const ins = typeof displayHeightFtIn.inches === 'number' ? displayHeightFtIn.inches : 0;
                           setProfile({ ...profile, height_cm: ftInToCm(ft, ins) });
                         }}
                         min="3" max="8" placeholder="ft" />
                       <input type="number" className="form-input" value={displayHeightFtIn.inches}
                         onChange={e => {
-                          const ins = parseInt(e.target.value) || 0;
+                          if (e.target.value === '') { setProfile({ ...profile, height_cm: null }); return; }
+                          const ins = parseInt(e.target.value);
                           const ft = typeof displayHeightFtIn.feet === 'number' ? displayHeightFtIn.feet : 0;
                           setProfile({ ...profile, height_cm: ftInToCm(ft, ins) });
                         }}
@@ -412,8 +415,9 @@ export default function ProfilePage() {
               <div className="form-group">
                 <label className="form-label">Workout Calorie Burn (per session)</label>
                 <input type="number" className="form-input"
-                  value={profile.workout_burn ?? 400}
-                  onChange={e => setProfile({ ...profile, workout_burn: parseInt(e.target.value) || 0 })}
+                  value={profile.workout_burn ?? ''}
+                  onChange={e => setProfile({ ...profile, workout_burn: e.target.value === '' ? (null as unknown as number) : parseInt(e.target.value) })}
+                  onBlur={() => { if (profile.workout_burn === null || profile.workout_burn === undefined || isNaN(profile.workout_burn)) setProfile({ ...profile, workout_burn: 400 }); }}
                   min="0" max="1500" step="50" placeholder="e.g. 400" />
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
                   Estimated calories burned during a workout. Check your watch or use ~300 light, ~400 moderate, ~600 intense.
@@ -424,8 +428,9 @@ export default function ProfilePage() {
                 <div className="form-group">
                   <label className="form-label">Workout Day Deficit (kcal)</label>
                   <input type="number" className="form-input"
-                    value={profile.workout_deficit ?? -500}
-                    onChange={e => setProfile({ ...profile, workout_deficit: parseInt(e.target.value) || 0 })}
+                    value={profile.workout_deficit ?? ''}
+                    onChange={e => setProfile({ ...profile, workout_deficit: e.target.value === '' ? (null as unknown as number) : parseInt(e.target.value) })}
+                    onBlur={() => { if (profile.workout_deficit === null || profile.workout_deficit === undefined || isNaN(profile.workout_deficit)) setProfile({ ...profile, workout_deficit: -500 }); }}
                     min="-1500" max="500" step="50" />
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
                     {(profile.workout_deficit ?? -500) < 0
@@ -438,8 +443,9 @@ export default function ProfilePage() {
                 <div className="form-group">
                   <label className="form-label">Rest Day Deficit (kcal)</label>
                   <input type="number" className="form-input"
-                    value={profile.rest_deficit ?? -500}
-                    onChange={e => setProfile({ ...profile, rest_deficit: parseInt(e.target.value) || 0 })}
+                    value={profile.rest_deficit ?? ''}
+                    onChange={e => setProfile({ ...profile, rest_deficit: e.target.value === '' ? (null as unknown as number) : parseInt(e.target.value) })}
+                    onBlur={() => { if (profile.rest_deficit === null || profile.rest_deficit === undefined || isNaN(profile.rest_deficit)) setProfile({ ...profile, rest_deficit: -500 }); }}
                     min="-1500" max="500" step="50" />
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
                     {(profile.rest_deficit ?? -500) < 0
@@ -468,8 +474,8 @@ export default function ProfilePage() {
               <div className="form-group">
                 <label className="form-label">Body Fat % (optional)</label>
                 <input type="number" className="form-input"
-                  value={profile.body_fat_pct || ''}
-                  onChange={e => setProfile({ ...profile, body_fat_pct: parseFloat(e.target.value) || null })}
+                  value={profile.body_fat_pct ?? ''}
+                  onChange={e => setProfile({ ...profile, body_fat_pct: e.target.value === '' ? null : parseFloat(e.target.value) })}
                   min="3" max="60" step="0.5"
                   placeholder="e.g. 18" />
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
@@ -689,33 +695,39 @@ export default function ProfilePage() {
                   <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px', color: 'var(--accent-indigo)' }}>🏋️ Workout Day</div>
                   <div className="form-group">
                     <label className="form-label">Calories</label>
-                    <input type="number" className="form-input" value={profile.target_calories}
-                      onChange={e => setProfile({ ...profile, target_calories: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.target_calories ?? ''}
+                      onChange={e => setProfile({ ...profile, target_calories: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.target_calories && profile.target_calories !== 0) setProfile({ ...profile, target_calories: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label" style={{ color: 'var(--color-protein)' }}>Protein (g)</label>
-                    <input type="number" className="form-input" value={profile.target_protein_g}
-                      onChange={e => setProfile({ ...profile, target_protein_g: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.target_protein_g ?? ''}
+                      onChange={e => setProfile({ ...profile, target_protein_g: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.target_protein_g && profile.target_protein_g !== 0) setProfile({ ...profile, target_protein_g: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label" style={{ color: 'var(--color-carbs)' }}>Carbs (g)</label>
-                    <input type="number" className="form-input" value={profile.target_carbs_g}
-                      onChange={e => setProfile({ ...profile, target_carbs_g: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.target_carbs_g ?? ''}
+                      onChange={e => setProfile({ ...profile, target_carbs_g: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.target_carbs_g && profile.target_carbs_g !== 0) setProfile({ ...profile, target_carbs_g: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label" style={{ color: 'var(--color-fat)' }}>Fat (g)</label>
-                    <input type="number" className="form-input" value={profile.target_fat_g}
-                      onChange={e => setProfile({ ...profile, target_fat_g: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.target_fat_g ?? ''}
+                      onChange={e => setProfile({ ...profile, target_fat_g: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.target_fat_g && profile.target_fat_g !== 0) setProfile({ ...profile, target_fat_g: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Fiber (g)</label>
-                    <input type="number" className="form-input" value={profile.target_fiber_g}
-                      onChange={e => setProfile({ ...profile, target_fiber_g: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.target_fiber_g ?? ''}
+                      onChange={e => setProfile({ ...profile, target_fiber_g: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.target_fiber_g && profile.target_fiber_g !== 0) setProfile({ ...profile, target_fiber_g: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Sodium (mg)</label>
-                    <input type="number" className="form-input" value={profile.target_sodium_mg}
-                      onChange={e => setProfile({ ...profile, target_sodium_mg: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.target_sodium_mg ?? ''}
+                      onChange={e => setProfile({ ...profile, target_sodium_mg: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.target_sodium_mg && profile.target_sodium_mg !== 0) setProfile({ ...profile, target_sodium_mg: 0 }); }} />
                   </div>
                   <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', fontSize: '12px' }}
                     onClick={() => handleApplySuggestion('training')} disabled={!suggestion}>
@@ -728,33 +740,39 @@ export default function ProfilePage() {
                   <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px', color: '#8b5cf6' }}>😴 Rest Day</div>
                   <div className="form-group">
                     <label className="form-label">Calories</label>
-                    <input type="number" className="form-input" value={profile.rest_target_calories}
-                      onChange={e => setProfile({ ...profile, rest_target_calories: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.rest_target_calories ?? ''}
+                      onChange={e => setProfile({ ...profile, rest_target_calories: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.rest_target_calories && profile.rest_target_calories !== 0) setProfile({ ...profile, rest_target_calories: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label" style={{ color: 'var(--color-protein)' }}>Protein (g)</label>
-                    <input type="number" className="form-input" value={profile.rest_target_protein_g}
-                      onChange={e => setProfile({ ...profile, rest_target_protein_g: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.rest_target_protein_g ?? ''}
+                      onChange={e => setProfile({ ...profile, rest_target_protein_g: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.rest_target_protein_g && profile.rest_target_protein_g !== 0) setProfile({ ...profile, rest_target_protein_g: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label" style={{ color: 'var(--color-carbs)' }}>Carbs (g)</label>
-                    <input type="number" className="form-input" value={profile.rest_target_carbs_g}
-                      onChange={e => setProfile({ ...profile, rest_target_carbs_g: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.rest_target_carbs_g ?? ''}
+                      onChange={e => setProfile({ ...profile, rest_target_carbs_g: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.rest_target_carbs_g && profile.rest_target_carbs_g !== 0) setProfile({ ...profile, rest_target_carbs_g: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label" style={{ color: 'var(--color-fat)' }}>Fat (g)</label>
-                    <input type="number" className="form-input" value={profile.rest_target_fat_g}
-                      onChange={e => setProfile({ ...profile, rest_target_fat_g: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.rest_target_fat_g ?? ''}
+                      onChange={e => setProfile({ ...profile, rest_target_fat_g: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.rest_target_fat_g && profile.rest_target_fat_g !== 0) setProfile({ ...profile, rest_target_fat_g: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Fiber (g)</label>
-                    <input type="number" className="form-input" value={profile.rest_target_fiber_g}
-                      onChange={e => setProfile({ ...profile, rest_target_fiber_g: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.rest_target_fiber_g ?? ''}
+                      onChange={e => setProfile({ ...profile, rest_target_fiber_g: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.rest_target_fiber_g && profile.rest_target_fiber_g !== 0) setProfile({ ...profile, rest_target_fiber_g: 0 }); }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Sodium (mg)</label>
-                    <input type="number" className="form-input" value={profile.rest_target_sodium_mg}
-                      onChange={e => setProfile({ ...profile, rest_target_sodium_mg: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="form-input" value={profile.rest_target_sodium_mg ?? ''}
+                      onChange={e => setProfile({ ...profile, rest_target_sodium_mg: e.target.value === '' ? ('' as unknown as number) : parseInt(e.target.value) })}
+                      onBlur={() => { if (!profile.rest_target_sodium_mg && profile.rest_target_sodium_mg !== 0) setProfile({ ...profile, rest_target_sodium_mg: 0 }); }} />
                   </div>
                   <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', fontSize: '12px' }}
                     onClick={() => handleApplySuggestion('rest')} disabled={!restSuggestion}>
