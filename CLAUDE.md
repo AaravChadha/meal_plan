@@ -80,8 +80,8 @@ Get the existing app working correctly before adding anything new.
 
 ---
 
-### Phase 2 — Complete Web Features
-Fill in missing functionality and make the app actually usable day-to-day.
+### Phase 2 — Daily Driver (make the app usable every day)
+The minimum features needed to actually use this app for daily nutrition tracking.
 
 #### 2.1 Dashboard Improvements
 - [x] 2.1.1 Workout/rest day toggle that switches which targets are shown for today ✅
@@ -108,177 +108,186 @@ Fill in missing functionality and make the app actually usable day-to-day.
 - [ ] 2.3.4 Edit logged entries — tap a logged item to change servings, swap to a different food, or delete it (inline edit, no page navigation)
 - [ ] 2.3.5 Drag and drop food items between meals — move an item from breakfast to lunch if added to the wrong meal
 - [ ] 2.3.6 Copy meals from a previous day
-- [ ] 2.3.6 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa")
-- [ ] 2.3.7 Adding a combo logs each item separately so you can remove/edit individual items after
-- [ ] 2.3.8 Combo manager — create/edit/delete combos from food log or profile page
+- [ ] 2.3.7 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa"). NOT full meals — just a few station items that go together.
+- [ ] 2.3.8 Adding a combo logs each item separately so you can remove/edit individual items after
+- [ ] 2.3.9 Combo manager — create/edit/delete combos from food log or profile page
 
-#### 2.4 Purdue Dining Court Integration (live menu)
-- [ ] 2.4.1 Dining court picker — select which court you're at (Earhart, Wiley, Ford, Hillenbrand, Windsor)
-- [ ] 2.4.2 Meal picker — select breakfast, lunch, or dinner (only show meals currently available based on time/hours)
-- [ ] 2.4.3 Station-based food list — items grouped by station (e.g. "Granite Grill", "The Pastry Shop") matching dining court layout
-- [ ] 2.4.4 Serving size input per item — tap an item, set number of servings, add to today's log
-- [ ] 2.4.5 Running total bar — as you add items, show live running total of calories/protein/carbs/fat for this meal
-- [ ] 2.4.6 "Planned menu" caveat banner — note that menu may differ from what's actually available
-- [ ] 2.4.7 Remaining macros helper — show "you need X more protein today" alongside each item's nutrition so you pick smarter
-- [ ] 2.4.8 Cache today's menu locally — don't re-fetch from API on every page load, refresh once per hour
-- [ ] 2.4.9 Dining court hours — show open/closed status, grey out courts that are closed
-
-#### 2.5 Water Tracking
-- [ ] 2.5.1 Water intake tracker — simple glasses/oz counter on dashboard
-- [ ] 2.5.2 Daily water goal based on body weight (~0.5 oz per lb or 33 ml per kg)
-- [ ] 2.5.3 Visual progress (fill animation or progress bar)
-- [ ] 2.5.4 Include in daily grade as a bonus factor
-
-#### 2.6 Grades Improvements
-- [ ] 2.6.1 Asymmetric grading per nutrient — not all macros should penalize going over equally:
+#### 2.4 Grades Improvements
+- [ ] 2.4.1 Asymmetric grading per nutrient — not all macros should penalize going over equally:
   - **Protein**: over is GOOD up to ~150% of target (muscle preservation), under is bad
   - **Fiber**: over is fine up to cap (~50g), under is bad
   - **Carbs/Fat**: over is bad (extra calories), slightly under is ok on a cut
   - **Calories**: over is bad on cut, slightly under is ok (already partially done in 1.1.4)
   - **Sodium**: over is bad, under is fine
-- [ ] 2.6.2 "Why did I get this grade?" breakdown — show exactly which macros pulled you up or down (e.g. "protein 40g short → dropped from A to B-")
-- [ ] 2.6.3 Grade trend chart — average grade over weeks/months, are you improving?
-- [ ] 2.6.4 Streak tracking — consecutive days of A/B grades, longest streak
+- [ ] 2.4.2 "Why did I get this grade?" breakdown — show exactly which macros pulled you up or down (e.g. "protein 40g short → dropped from A to B-")
+- [ ] 2.4.3 Grade trend chart — average grade over weeks/months, are you improving?
+- [ ] 2.4.4 Streak tracking — consecutive days of A/B grades, longest streak
 
-#### 2.7 Comparison Table & Insights
-- [ ] 2.7.1 Visual workout vs rest day comparison table (side-by-side targets, color-coded)
-- [ ] 2.7.2 Weekly summary — average intake, days on target, best/worst day
+#### 2.5 Input UX Fixes
+- [ ] 2.5.1 Number inputs (servings, weight, deficit, etc.) allow clearing to empty while typing — only enforce min on blur, not on every keystroke
+- [ ] 2.5.2 All dates/times use user's local timezone, not UTC
 
-#### 2.8 Analytics Upgrades
-- [ ] 2.8.1 Weight trend chart with moving average
-- [ ] 2.8.2 Body fat % tracking over time (if entered)
-- [ ] 2.8.3 Macro distribution pie chart per day
-- [ ] 2.8.4 Calorie trend line with target overlay
+---
 
-#### 2.9 Body Recomp Tracking
-- [ ] 2.9.1 Progress photos — upload weekly photos, view side-by-side comparison over time
-- [ ] 2.9.2 Body measurements — waist, chest, arms, legs. Track over time with charts
-- [ ] 2.9.3 Recomp indicators — "scale stalled but waist dropped 0.5 inches = recomp is working"
+### Phase 3 — Purdue Integration & Analytics
+Make it smart at Purdue dining courts and give useful insights over time.
 
-#### 2.10 Onboarding Flow
-- [ ] 2.10.1 First-time user setup wizard — step by step: enter stats → pick goal → see recommendations → set targets → done
-- [ ] 2.10.2 Skip option for experienced users who just want to set everything manually
-- [ ] 2.10.3 Explain what each field means as they fill it in (educational tooltips)
+#### 3.1 Purdue Dining Court Integration (live menu)
+- [ ] 3.1.1 Dining court picker — select which court you're at (Earhart, Wiley, Ford, Hillenbrand, Windsor)
+- [ ] 3.1.2 Meal picker — select breakfast, lunch, or dinner (only show meals currently available based on time/hours)
+- [ ] 3.1.3 Station-based food list — items grouped by station (e.g. "Granite Grill", "The Pastry Shop") matching dining court layout
+- [ ] 3.1.4 Serving size input per item — tap an item, set number of servings, add to today's log
+- [ ] 3.1.5 Running total bar — as you add items, show live running total of calories/protein/carbs/fat for this meal
+- [ ] 3.1.6 "Planned menu" caveat banner — note that menu may differ from what's actually available
+- [ ] 3.1.7 Remaining macros helper — show "you need X more protein today" alongside each item's nutrition so you pick smarter
+- [ ] 3.1.8 Cache today's menu locally — don't re-fetch from API on every page load, refresh once per hour
+- [ ] 3.1.9 Dining court hours — show open/closed status, grey out courts that are closed
 
-#### 2.11 Data & Export
-- [ ] 2.11.1 Backup API — export all user data (profile, custom foods, combos, baselines, food log, weight history) as JSON
-- [ ] 2.11.2 Restore API — import a backup JSON to rebuild account and all personal data
-- [ ] 2.11.3 Backup/restore UI on profile page — "Download Backup" + "Restore from Backup"
-- [ ] 2.11.4 Export food log, weight history, grades as CSV
-- [ ] 2.11.5 Shows you care about user data ownership (good for portfolio)
+#### 3.2 Water Tracking
+- [ ] 3.2.1 Water intake tracker — simple glasses/oz counter on dashboard
+- [ ] 3.2.2 Daily water goal based on body weight (~0.5 oz per lb or 33 ml per kg)
+- [ ] 3.2.3 Visual progress (fill animation or progress bar)
+- [ ] 3.2.4 Include in daily grade as a bonus factor
 
-#### 2.12 Flexible Macro Suggestions
-- [ ] 2.12.1 Let users customize macro priority order (e.g. "Protein > Carbs > Fat" vs "Protein > Fat > Carbs") — currently hardcoded to Protein > Carbs > Fat on rest, Protein > Carbs > Fat on workout
-- [ ] 2.12.2 Adjustable protein/fat/carb ratios per day type — sliders or presets ("balanced", "high carb", "keto-ish")
-- [ ] 2.12.3 Adapt suggestions based on user's actual workout schedule (not just binary rest/workout — account for heavy leg day vs light cardio vs full rest)
-- [ ] 2.12.4 "What if" mode — preview how changing one macro target affects the others (since carbs fill remaining calories)
+#### 3.3 Analytics & Insights
+- [ ] 3.3.1 Visual workout vs rest day comparison table (side-by-side targets, color-coded)
+- [ ] 3.3.2 Weekly summary — average intake, days on target, best/worst day
+- [ ] 3.3.3 Weight trend chart with moving average
+- [ ] 3.3.4 Body fat % tracking over time (if entered)
+- [ ] 3.3.5 Macro distribution pie chart per day
+- [ ] 3.3.6 Calorie trend line with target overlay
 
-#### 2.13 Goal-Aware UX (not just cut)
+#### 3.4 Body Recomp Tracking
+- [ ] 3.4.1 Progress photos — upload weekly photos, view side-by-side comparison over time
+- [ ] 3.4.2 Body measurements — waist, chest, arms, legs. Track over time with charts
+- [ ] 3.4.3 Recomp indicators — "scale stalled but waist dropped 0.5 inches = recomp is working"
+
+---
+
+### Phase 4 — Polish & Deploy Web App
+Get the app ready for other people to use, then ship it.
+
+#### 4.1 Goal-Aware UX (not just cut)
 The app currently works for all goals in formulas but the UX/tips/grading are cut-biased. Fix so bulk and maintain users get an equally good experience.
-- [ ] 2.13.1 Profile recommendations: surplus display for bulk (show "TDEE + surplus = target" not "TDEE − deficit"), maintain shows "eating at TDEE"
-- [ ] 2.13.2 Grading for bulk: penalize being UNDER calories (you need the surplus), reward hitting/slightly exceeding. Opposite of cut logic.
-- [ ] 2.13.3 Grading for maintain: symmetric — penalize going too far over OR under equally
-- [ ] 2.13.4 Tips and advice adapt to goal — bulk tips about eating enough, not "you're in a deficit"
-- [ ] 2.13.5 Rest vs workout day for bulk: workout days might have slightly more carbs (fuel), rest days slightly more than cut rest days since you're in surplus
-- [ ] 2.13.6 Dashboard messaging: "X cal remaining" on cut, "X cal left to hit surplus" on bulk, "on track" for maintain
-- [ ] 2.13.7 Test full flow for a bulk user and a maintain user end-to-end (register, set goal, log food, check grades)
+- [ ] 4.1.1 Profile recommendations: surplus display for bulk (show "TDEE + surplus = target" not "TDEE − deficit"), maintain shows "eating at TDEE"
+- [ ] 4.1.2 Grading for bulk: penalize being UNDER calories (you need the surplus), reward hitting/slightly exceeding. Opposite of cut logic.
+- [ ] 4.1.3 Grading for maintain: symmetric — penalize going too far over OR under equally
+- [ ] 4.1.4 Tips and advice adapt to goal — bulk tips about eating enough, not "you're in a deficit"
+- [ ] 4.1.5 Rest vs workout day for bulk: workout days might have slightly more carbs (fuel), rest days slightly more than cut rest days since you're in surplus
+- [ ] 4.1.6 Dashboard messaging: "X cal remaining" on cut, "X cal left to hit surplus" on bulk, "on track" for maintain
+- [ ] 4.1.7 Test full flow for a bulk user and a maintain user end-to-end (register, set goal, log food, check grades)
 
-#### 2.14 Polish & UX
-- [ ] 2.12.1 Loading states for all pages (skeleton screens, not blank)
-- [ ] 2.12.2 Error toasts when API calls fail
-- [ ] 2.12.3 Mobile-responsive CSS (usable on phone browser before native app)
-- [ ] 2.12.4 Dark/light theme toggle
+#### 4.2 Flexible Macro Suggestions
+- [ ] 4.2.1 Let users customize macro priority order (e.g. "Protein > Carbs > Fat" vs "Protein > Fat > Carbs") — currently hardcoded
+- [ ] 4.2.2 Adjustable protein/fat/carb ratios per day type — sliders or presets ("balanced", "high carb", "keto-ish")
+- [ ] 4.2.3 Adapt suggestions based on user's actual workout schedule (not just binary rest/workout — account for heavy leg day vs light cardio vs full rest)
+- [ ] 4.2.4 "What if" mode — preview how changing one macro target affects the others (since carbs fill remaining calories)
+
+#### 4.3 Onboarding Flow
+- [ ] 4.3.1 First-time user setup wizard — step by step: enter stats → pick goal → see recommendations → set targets → done
+- [ ] 4.3.2 Skip option for experienced users who just want to set everything manually
+- [ ] 4.3.3 Explain what each field means as they fill it in (educational tooltips)
+
+#### 4.4 Data & Export
+- [ ] 4.4.1 Backup API — export all user data (profile, custom foods, combos, baselines, food log, weight history) as JSON
+- [ ] 4.4.2 Restore API — import a backup JSON to rebuild account and all personal data
+- [ ] 4.4.3 Backup/restore UI on profile page — "Download Backup" + "Restore from Backup"
+- [ ] 4.4.4 Export food log, weight history, grades as CSV
+
+#### 4.5 Polish & UX
+- [ ] 4.5.1 Loading states for all pages (skeleton screens, not blank)
+- [ ] 4.5.2 Error toasts when API calls fail
+- [ ] 4.5.3 Mobile-responsive CSS (usable on phone browser before native app)
+- [ ] 4.5.4 Dark/light theme toggle
+
+#### 4.6 Deploy & Portfolio (Web)
+- [ ] 4.6.1 Deploy to Vercel (or Railway/Render) — move from SQLite to Turso or keep SQLite with persistent disk
+- [ ] 4.6.2 Set up environment variables for production (session secret, etc.)
+- [ ] 4.6.3 Write project README with screenshots, tech stack, what you learned
+- [ ] 4.6.4 Add to resume with bullet points on what it demonstrates
+- [ ] 4.6.5 Share with friends/classmates at Purdue for real-world testing
+- [ ] 4.6.6 Collect feedback, fix bugs from real users
 
 ---
 
-### Phase 2.5 — Deploy Web App
-Get the web app live so others can use it. Don't wait for mobile.
-
-#### 2.5a Deploy & Portfolio (Web)
-- [ ] 2.5a.1 Deploy to Vercel (or Railway/Render) — move from SQLite to Turso or keep SQLite with persistent disk
-- [ ] 2.5a.2 Set up environment variables for production (session secret, etc.)
-- [ ] 2.5a.3 Write project README with screenshots, tech stack, what you learned
-- [ ] 2.5a.4 Add to resume with bullet points on what it demonstrates
-- [ ] 2.5a.5 Share with friends/classmates at Purdue for real-world testing
-- [ ] 2.5a.6 Collect feedback, fix bugs from real users
-
----
-
-### Phase 3 — Mobile App (Expo/React Native)
+### Phase 5 — Mobile App (Expo/React Native)
 Rebuild the UI for iOS and Android. Backend logic carries over.
 
-#### 3.1 Project Setup
-- [ ] 3.1.1 Create Expo project alongside web (`/mobile` directory)
-- [ ] 3.1.2 Move shared logic to `/shared` (tdee.ts, grades.ts, nutrients.ts, types)
-- [ ] 3.1.3 Configure both web and mobile to import from `/shared`
-- [ ] 3.1.4 Set up expo-sqlite for on-device database
-- [ ] 3.1.5 Set up expo-router for navigation
+#### 5.1 Project Setup
+- [ ] 5.1.1 Create Expo project alongside web (`/mobile` directory)
+- [ ] 5.1.2 Move shared logic to `/shared` (tdee.ts, grades.ts, nutrients.ts, types)
+- [ ] 5.1.3 Configure both web and mobile to import from `/shared`
+- [ ] 5.1.4 Set up expo-sqlite for on-device database
+- [ ] 5.1.5 Set up expo-router for navigation
 
-#### 3.2 Core Screens
-- [ ] 3.2.1 Login / Register screens
-- [ ] 3.2.2 Dashboard screen with day type toggle
-- [ ] 3.2.3 Food log screen with search
-- [ ] 3.2.4 Profile screen with recommendations
-- [ ] 3.2.5 Grades screen
+#### 5.2 Core Screens
+- [ ] 5.2.1 Login / Register screens
+- [ ] 5.2.2 Dashboard screen with day type toggle
+- [ ] 5.2.3 Food log screen with search
+- [ ] 5.2.4 Profile screen with recommendations
+- [ ] 5.2.5 Grades screen
 
-#### 3.3 Mobile-Specific Features
-- [ ] 3.3.1 Apple HealthKit integration — pull real TDEE, steps, workout data
-- [ ] 3.3.2 Auto-detect workout day from HealthKit activity
-- [ ] 3.3.3 Barcode scanner for packaged foods
-- [ ] 3.3.4 Push notifications — meal reminders, grade updates
-- [ ] 3.3.5 Widget — today's calories/macros on home screen
+#### 5.3 Mobile-Specific Features
+- [ ] 5.3.1 Apple HealthKit integration — pull real TDEE, steps, workout data
+- [ ] 5.3.2 Auto-detect workout day from HealthKit activity
+- [ ] 5.3.3 Barcode scanner for packaged foods
+- [ ] 5.3.4 Push notifications — meal reminders, grade updates
+- [ ] 5.3.5 Widget — today's calories/macros on home screen
 
-#### 3.4 Camera & Vision Features (uses phone camera + AI)
-- [ ] 3.4.1 Scan nutrition label → auto-create custom food (OCR extracts calories, protein, carbs, fat, serving size)
-- [ ] 3.4.2 Photo food logging — take a picture of your plate, AI estimates portion sizes/serving amounts
-- [ ] 3.4.3 Full AI calorie estimation — snap a photo, AI identifies the food AND estimates calories/macros
-- [ ] 3.4.4 Save photo with food log entry so you can look back at what you ate
+#### 5.4 Camera & Vision Features (uses phone camera + AI)
+- [ ] 5.4.1 Scan nutrition label → auto-create custom food (OCR extracts calories, protein, carbs, fat, serving size)
+- [ ] 5.4.2 Photo food logging — take a picture of your plate, AI estimates portion sizes/serving amounts
+- [ ] 5.4.3 Full AI calorie estimation — snap a photo, AI identifies the food AND estimates calories/macros
+- [ ] 5.4.4 Save photo with food log entry so you can look back at what you ate
 
 ---
 
-### Phase 4 — AI Meal Suggestion Engine
+### Phase 6 — AI Meal Suggestion Engine
 Fine-tuned AI model that knows Purdue dining, your macros, and your preferences.
 
-#### 4.1 Data Collection & Training Set
-- [ ] 4.1.1 Build training dataset — map meals to macro outcomes (e.g. "at Earhart lunch, picking X+Y+Z hits 600 cal, 45g P")
-- [ ] 4.1.2 Log user preferences over time — what they pick, what they skip, ratings
-- [ ] 4.1.3 Create meal combinations from menu items that hit common macro targets
-- [ ] 4.1.4 Label good vs bad combos (hit targets = good, way over/under = bad)
+#### 6.1 Data Collection & Training Set
+- [ ] 6.1.1 Build training dataset — map meals to macro outcomes (e.g. "at Earhart lunch, picking X+Y+Z hits 600 cal, 45g P")
+- [ ] 6.1.2 Log user preferences over time — what they pick, what they skip, ratings
+- [ ] 6.1.3 Create meal combinations from menu items that hit common macro targets
+- [ ] 6.1.4 Label good vs bad combos (hit targets = good, way over/under = bad)
 
-#### 4.2 Model & Integration
-- [ ] 4.2.1 Choose approach — fine-tuned LLM, recommendation engine, or constraint solver (research trade-offs)
-- [ ] 4.2.2 User picks foods they want to eat — "I want the burger and fries" + optionally picks healthy sides they're OK with
-- [ ] 4.2.3 AI builds a balanced meal around those picks — adjusts servings, suggests additions/swaps to hit macros (e.g. "get the burger but skip fries, add grilled chicken side + broccoli to hit protein")
-- [ ] 4.2.4 Only sends the user's selected items + a few suggested healthy options to the AI — NOT the entire 40-item menu, keeps token usage low
-- [ ] 4.2.5 Multiple suggestion styles — "high protein", "balanced", "I want comfort food but keep it reasonable"
-- [ ] 4.2.6 Learn from user — if they reject a suggestion or always pick certain foods, adapt over time
+#### 6.2 Model & Integration
+- [ ] 6.2.1 Choose approach — fine-tuned LLM, recommendation engine, or constraint solver (research trade-offs)
+- [ ] 6.2.2 User picks foods they want to eat — "I want the burger and fries" + optionally picks healthy sides they're OK with
+- [ ] 6.2.3 AI builds a balanced meal around those picks — adjusts servings, suggests additions/swaps to hit macros (e.g. "get the burger but skip fries, add grilled chicken side + broccoli to hit protein")
+- [ ] 6.2.4 Only sends the user's selected items + a few suggested healthy options to the AI — NOT the entire 40-item menu, keeps token usage low
+- [ ] 6.2.5 Multiple suggestion styles — "high protein", "balanced", "I want comfort food but keep it reasonable"
+- [ ] 6.2.6 Learn from user — if they reject a suggestion or always pick certain foods, adapt over time
 
-#### 4.3 Privacy & IP Protection
+#### 6.3 Privacy & IP Protection
 Keep the main repo PUBLIC (portfolio). AI-specific assets go in a SEPARATE PRIVATE repo or cloud storage.
-- [ ] 4.3.1 Create a private repo (e.g. `nutritrack-ai`) for training data, model weights, and evaluation scripts
-- [ ] 4.3.2 Store fine-tuned model on private cloud (HuggingFace private, S3, etc.) — main app calls it via API
-- [ ] 4.3.3 Add `/ai-data/` to `.gitignore` in main repo so training data never leaks to public
-- [ ] 4.3.4 The API endpoint code that calls the model stays in the public repo — it's just fetch calls, the model itself is private
+- [ ] 6.3.1 Create a private repo (e.g. `nutritrack-ai`) for training data, model weights, and evaluation scripts
+- [ ] 6.3.2 Store fine-tuned model on private cloud (HuggingFace private, S3, etc.) — main app calls it via API
+- [ ] 6.3.3 Add `/ai-data/` to `.gitignore` in main repo so training data never leaks to public
+- [ ] 6.3.4 The API endpoint code that calls the model stays in the public repo — it's just fetch calls, the model itself is private
 
-#### 4.4 Smart Features
-- [ ] 4.3.1 Meal planning for the week — given your workout/rest schedule, suggest dining court meals for each day
-- [ ] 4.3.2 "I already ate X for breakfast" → adjust lunch/dinner suggestions to balance macros
-- [ ] 4.3.3 Allergen/preference awareness — avoid foods user has flagged (vegetarian, no peanuts, etc.)
-- [ ] 4.3.4 Budget-aware — if user is running low on meal swipes, suggest efficient combos
+#### 6.4 Smart Features
+- [ ] 6.4.1 Meal planning for the week — given your workout/rest schedule, suggest dining court meals for each day
+- [ ] 6.4.2 "I already ate X for breakfast" → adjust lunch/dinner suggestions to balance macros
+- [ ] 6.4.3 Allergen/preference awareness — avoid foods user has flagged (vegetarian, no peanuts, etc.)
+- [ ] 6.4.4 Budget-aware — if user is running low on meal swipes, suggest efficient combos
 
-### Phase 5 — Ship Mobile App & Scale
-#### 5.1 Launch Mobile
-- [ ] 5.1.1 App icon and splash screen (moved from 3.5)
-- [ ] 5.1.2 Build with EAS for iOS and Android
-- [ ] 5.1.3 TestFlight beta (iOS) — share with friends for testing
-- [ ] 5.1.4 App Store / Play Store submission
-- [ ] 5.1.5 Update resume with both web + mobile versions
+---
 
-#### 5.2 Scale (if turning into a real product)
-- [ ] 5.2.1 Cloud database (Supabase/Turso) for web + mobile sync
-- [ ] 5.2.2 User accounts sync across web and mobile
-- [ ] 5.2.3 Analytics dashboard — how many users, popular foods, etc.
-- [ ] 5.2.4 Consider monetization if there's demand
+### Phase 7 — Ship Mobile App & Scale
+
+#### 7.1 Launch Mobile
+- [ ] 7.1.1 App icon and splash screen
+- [ ] 7.1.2 Build with EAS for iOS and Android
+- [ ] 7.1.3 TestFlight beta (iOS) — share with friends for testing
+- [ ] 7.1.4 App Store / Play Store submission
+- [ ] 7.1.5 Update resume with both web + mobile versions
+
+#### 7.2 Scale (if turning into a real product)
+- [ ] 7.2.1 Cloud database (Supabase/Turso) for web + mobile sync
+- [ ] 7.2.2 User accounts sync across web and mobile
+- [ ] 7.2.3 Analytics dashboard — how many users, popular foods, etc.
+- [ ] 7.2.4 Consider monetization if there's demand
 
 ## Rules
 - **NEVER delete the database** — use ALTER TABLE migrations. User hates re-registering.
