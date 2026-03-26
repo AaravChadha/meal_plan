@@ -95,10 +95,10 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [x] 2.2.3 Baseline section on profile page — add/remove/reorder slots, assign a default item to each slot ✅
 - [x] 2.2.4 Each slot shows a dropdown/search of your custom foods in that category — easy to swap between variants ✅
   - ~~Fix needed: search only works after clicking "Swap"~~ Fixed — clicking "No default item set" now opens search
-- [ ] 2.2.5 Baseline checklist on Food Log page — shows your slots with checkboxes, pre-filled with the default item. Changing a slot's default only affects future days — past food log entries stay as they were.
+- [x] 2.2.5 Baseline checklist on Food Log page — shows your slots with checkboxes, pre-filled with the default item. Changing a slot's default only affects future days — past food log entries stay as they were. ✅
 - [ ] 2.2.6 Tap the item name to swap to a different variant from your custom foods (without leaving the checklist)
-- [ ] 2.2.7 Checking off a slot logs that item for the day and adds its macros to the daily total
-- [ ] 2.2.8 Unchecking removes it from that day's log
+- [x] 2.2.7 Checking off a slot logs that item for the day and adds its macros to the daily total ✅
+- [x] 2.2.8 Unchecking removes it from that day's log ✅
 - [x] 2.2.9 Visual indicator showing how much of your daily target the baseline covers ✅
 
 #### 2.3 Food Log Enhancements

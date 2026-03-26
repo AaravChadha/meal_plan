@@ -36,6 +36,21 @@ interface MealEntry {
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+  baseline_slot_id: number | null;
+}
+
+interface BaselineSlot {
+  id: number;
+  slot_name: string;
+  default_food_id: number | null;
+  food_name: string | null;
+  brand: string | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  serving_size: number | null;
+  serving_unit: string | null;
 }
 
 const MEAL_ICONS: Record<string, string> = {
@@ -71,6 +86,7 @@ const EMPTY_CUSTOM_FOOD = {
 export default function FoodLogPage() {
   const [date, setDate] = useState(() => localDate());
   const [meals, setMeals] = useState<MealEntry[]>([]);
+  const [baselineSlots, setBaselineSlots] = useState<BaselineSlot[]>([]);
   const [selectedMealType, setSelectedMealType] = useState('breakfast');
   const [selectedFood, setSelectedFood] = useState<FoodResult | null>(null);
   const [servings, setServings] = useState<number | ''>(1);
@@ -90,9 +106,74 @@ export default function FoodLogPage() {
     }
   }, [date]);
 
+  const fetchBaseline = useCallback(async () => {
+    try {
+      const res = await fetch('/api/baseline');
+      if (res.status === 401) return;
+      const data = await res.json();
+      if (data.success) setBaselineSlots(data.data);
+    } catch (err) {
+      console.error('Error fetching baseline:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMeals();
-  }, [fetchMeals]);
+    fetchBaseline();
+  }, [fetchMeals, fetchBaseline]);
+
+  // Which baseline slots are checked today? Match by baseline_slot_id in food_log
+  const checkedSlotIds = new Set(
+    meals.filter(m => m.baseline_slot_id).map(m => m.baseline_slot_id as number)
+  );
+
+  const handleBaselineToggle = async (slot: BaselineSlot) => {
+    if (!slot.default_food_id) {
+      showToastMsg(`Set a default food for "${slot.slot_name}" on your Profile first`);
+      return;
+    }
+
+    const isChecked = checkedSlotIds.has(slot.id);
+
+    if (isChecked) {
+      // Uncheck: delete the food_log entry for this baseline slot today
+      const entry = meals.find(m => m.baseline_slot_id === slot.id);
+      if (entry) {
+        try {
+          const res = await fetch(`/api/food-log?id=${entry.id}`, { method: 'DELETE' });
+          if (res.status === 401) { window.location.href = '/login'; return; }
+          fetchMeals();
+          showToastMsg(`Removed ${slot.slot_name} from today`);
+        } catch (err) {
+          console.error('Error removing baseline entry:', err);
+        }
+      }
+    } else {
+      // Check: log the default food for this slot
+      try {
+        const res = await fetch('/api/food-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            food_item_id: slot.default_food_id,
+            meal_type: 'snack',
+            servings: 1,
+            logged_date: date,
+            baseline_slot_id: slot.id,
+          }),
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        fetchMeals();
+        showToastMsg(`Added ${slot.food_name} to today`);
+      } catch (err) {
+        console.error('Error adding baseline entry:', err);
+      }
+    }
+  };
+
+  // Baseline totals
+  const baselineEntries = meals.filter(m => m.baseline_slot_id);
+  const baselineTotalCal = baselineEntries.reduce((sum, m) => sum + m.calories * m.servings, 0);
 
   const handleFoodSelect = (food: FoodResult) => {
     setSelectedFood(food);
@@ -232,10 +313,12 @@ export default function FoodLogPage() {
     setCustomFood(prev => ({ ...prev, calories: cal }));
   };
 
+  // Exclude baseline entries from meal sections (they show in their own section)
+  const nonBaselineMeals = meals.filter(m => !m.baseline_slot_id);
   const mealGroups = ['breakfast', 'lunch', 'dinner', 'snack'].map((type) => ({
     type,
-    entries: meals.filter((m) => m.meal_type === type),
-    totalCal: meals.filter((m) => m.meal_type === type).reduce((sum, m) => sum + m.calories * m.servings, 0),
+    entries: nonBaselineMeals.filter((m) => m.meal_type === type),
+    totalCal: nonBaselineMeals.filter((m) => m.meal_type === type).reduce((sum, m) => sum + m.calories * m.servings, 0),
   }));
 
   return (
@@ -269,6 +352,82 @@ export default function FoodLogPage() {
 
         {/* Food Search */}
         <FoodSearch onSelect={handleFoodSelect} />
+
+        {/* Baseline Checklist */}
+        {baselineSlots.length > 0 && (
+          <div className="meal-section" style={{ marginBottom: '16px' }}>
+            <div className="meal-header">
+              <div className="meal-header-left">
+                <span className="meal-icon">📋</span>
+                <span className="meal-name">Daily Baseline</span>
+              </div>
+              <span className="meal-calories">{Math.round(baselineTotalCal)} cal</span>
+            </div>
+            <div className="meal-items">
+              {baselineSlots.map(slot => {
+                const isChecked = checkedSlotIds.has(slot.id);
+                const entry = meals.find(m => m.baseline_slot_id === slot.id);
+                const cal = isChecked && entry ? Math.round(entry.calories * entry.servings) : (slot.calories ? Math.round(slot.calories) : 0);
+                const prot = isChecked && entry ? Math.round(entry.protein_g * entry.servings) : (slot.protein_g ? Math.round(slot.protein_g) : 0);
+                const carb = isChecked && entry ? Math.round(entry.carbs_g * entry.servings) : (slot.carbs_g ? Math.round(slot.carbs_g) : 0);
+                const fat = isChecked && entry ? Math.round(entry.fat_g * entry.servings) : (slot.fat_g ? Math.round(slot.fat_g) : 0);
+
+                return (
+                  <div
+                    key={slot.id}
+                    className="meal-item"
+                    style={{
+                      cursor: 'pointer',
+                      opacity: isChecked ? 1 : 0.6,
+                      transition: 'opacity 0.2s',
+                    }}
+                    onClick={() => handleBaselineToggle(slot)}
+                  >
+                    {/* Checkbox */}
+                    <div style={{
+                      width: 22, height: 22, borderRadius: '4px', flexShrink: 0,
+                      border: isChecked ? '2px solid var(--accent-primary)' : '2px solid var(--border-primary)',
+                      background: isChecked ? 'var(--accent-primary)' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.2s',
+                    }}>
+                      {isChecked && <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>✓</span>}
+                    </div>
+
+                    <div className="meal-item-info">
+                      <div className="meal-item-name">{slot.slot_name}</div>
+                      <div className="meal-item-detail">
+                        {slot.food_name
+                          ? <>{slot.food_name}{slot.brand ? ` · ${slot.brand}` : ''}</>
+                          : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No default item set</span>
+                        }
+                      </div>
+                    </div>
+
+                    <div className="meal-item-nutrients">
+                      <div className="meal-item-nutrient">
+                        <div className="meal-item-nutrient-value" style={{ color: 'var(--color-calories)' }}>{cal}</div>
+                        <div className="meal-item-nutrient-label">cal</div>
+                      </div>
+                      <div className="meal-item-nutrient">
+                        <div className="meal-item-nutrient-value" style={{ color: 'var(--color-protein)' }}>{prot}g</div>
+                        <div className="meal-item-nutrient-label">protein</div>
+                      </div>
+                      <div className="meal-item-nutrient">
+                        <div className="meal-item-nutrient-value" style={{ color: 'var(--color-carbs)' }}>{carb}g</div>
+                        <div className="meal-item-nutrient-label">carbs</div>
+                      </div>
+                      <div className="meal-item-nutrient">
+                        <div className="meal-item-nutrient-value" style={{ color: 'var(--color-fat)' }}>{fat}g</div>
+                        <div className="meal-item-nutrient-label">fat</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Meal Entries */}
         <div className="meals-container">

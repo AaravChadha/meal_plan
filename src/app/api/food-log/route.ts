@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const entries = db.prepare(`
     SELECT
       fl.id, fl.user_id, fl.food_item_id, fl.meal_type, fl.servings,
-      fl.logged_date, fl.created_at,
+      fl.logged_date, fl.created_at, fl.baseline_slot_id,
       fi.name as food_name, fi.brand, fi.serving_size, fi.serving_unit,
       fi.calories, fi.protein_g, fi.carbs_g, fi.fat_g, fi.fiber_g,
       fi.sugar_g, fi.sodium_mg, fi.cholesterol_mg, fi.saturated_fat_g
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const db = getDb();
 
-    const { food_item_id, meal_type, servings = 1, logged_date } = body;
+    const { food_item_id, meal_type, servings = 1, logged_date, baseline_slot_id } = body;
     const user_id = userId;
 
     if (!food_item_id || !meal_type || !logged_date) {
@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
     }
 
     const result = db.prepare(`
-      INSERT INTO food_log (user_id, food_item_id, meal_type, servings, logged_date)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(user_id, food_item_id, meal_type, servings, logged_date);
+      INSERT INTO food_log (user_id, food_item_id, meal_type, servings, logged_date, baseline_slot_id)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(user_id, food_item_id, meal_type, servings, logged_date, baseline_slot_id || null);
 
     // Return the full entry with food data
     const entry = db.prepare(`

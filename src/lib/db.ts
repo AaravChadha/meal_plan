@@ -147,6 +147,9 @@ function initTables(db: Database.Database) {
   // Custom foods belong to a user. Shared foods (Purdue, common) have user_id = NULL.
   try { db.exec('ALTER TABLE food_items ADD COLUMN user_id INTEGER REFERENCES users(id)'); } catch {}
 
+  // Baseline entries in food_log are tagged with a baseline_slot_id
+  try { db.exec('ALTER TABLE food_log ADD COLUMN baseline_slot_id INTEGER REFERENCES baseline_slots(id)'); } catch {}
+
   // Baseline slots: daily items the user eats every day (e.g. yogurt, protein shake)
   db.exec(`
     CREATE TABLE IF NOT EXISTS baseline_slots (
