@@ -33,14 +33,30 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
   const [results, setResults] = useState<FoodResult[]>([]);
   const [recentFoods, setRecentFoods] = useState<FoodResult[]>([]);
   const [frequentFoods, setFrequentFoods] = useState<FoodResult[]>([]);
+  const [favoriteFoods, setFavoriteFoods] = useState<FoodResult[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showingRecents, setShowingRecents] = useState(false);
+  const [showingFavorites, setShowingFavorites] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fetchedRecents = useRef(false);
 
-  // Fetch recent/frequent foods once on mount
+  const fetchFavorites = () => {
+    fetch('/api/foods/favorites')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const favs = data.data.map((f: FoodResult) => ({ ...f, source: 'local' }));
+          setFavoriteFoods(favs);
+          setFavoriteIds(new Set(favs.map((f: FoodResult) => f.id).filter(Boolean) as number[]));
+        }
+      })
+      .catch(() => {});
+  };
+
+  // Fetch recent/frequent/favorites on mount
   useEffect(() => {
     if (fetchedRecents.current) return;
     fetchedRecents.current = true;
@@ -53,6 +69,7 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
         }
       })
       .catch(() => {});
+    fetchFavorites();
   }, []);
 
   useEffect(() => {
@@ -60,6 +77,7 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowResults(false);
         setShowingRecents(false);
+        setShowingFavorites(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -120,6 +138,7 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
     setResults([]);
     setShowResults(false);
     setShowingRecents(false);
+    setShowingFavorites(false);
     // Refresh recents after logging
     fetch('/api/foods/recent')
       .then(r => r.json())
@@ -132,24 +151,62 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
       .catch(() => {});
   };
 
+  const toggleFavorite = async (e: React.MouseEvent, food: FoodResult) => {
+    e.stopPropagation();
+    if (!food.id) return;
+    const isFav = favoriteIds.has(food.id);
+    if (isFav) {
+      await fetch(`/api/foods/favorites?food_item_id=${food.id}`, { method: 'DELETE' });
+      setFavoriteIds(prev => { const next = new Set(prev); next.delete(food.id!); return next; });
+      setFavoriteFoods(prev => prev.filter(f => f.id !== food.id));
+    } else {
+      await fetch('/api/foods/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ food_item_id: food.id }),
+      });
+      setFavoriteIds(prev => new Set(prev).add(food.id!));
+      setFavoriteFoods(prev => [...prev, { ...food, source: 'local' }]);
+    }
+  };
+
   const renderFoodItem = (food: FoodResult, idx: number, badge?: string) => {
     const isFrequent = frequentFoods.some(f => f.id === food.id);
     const isRecent = recentFoods.some(f => f.id === food.id);
+    const isFav = food.id ? favoriteIds.has(food.id) : false;
     return (
       <div
         key={`${food.source}-${food.id || food.name}-${idx}`}
         className="search-result-item"
         onClick={() => handleSelect(food)}
       >
-        <div>
+        {/* Star toggle */}
+        {food.id && (
+          <button
+            onClick={(e) => toggleFavorite(e, food)}
+            title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+              fontSize: '16px', flexShrink: 0, lineHeight: 1,
+              color: isFav ? '#f59e0b' : 'var(--text-muted)',
+              opacity: isFav ? 1 : 0.4,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { if (!isFav) e.currentTarget.style.opacity = '0.8'; }}
+            onMouseLeave={(e) => { if (!isFav) e.currentTarget.style.opacity = '0.4'; }}
+          >
+            {isFav ? '★' : '☆'}
+          </button>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div className="search-result-name">
             {food.name}
             {badge && (
               <span style={{
                 fontSize: '10px', fontWeight: 600, padding: '1px 6px',
                 borderRadius: '4px', marginLeft: '6px',
-                background: badge === 'Recent' ? 'rgba(99,102,241,0.12)' : 'rgba(16,185,129,0.12)',
-                color: badge === 'Recent' ? 'var(--accent-indigo)' : '#10b981',
+                background: badge === 'Recent' ? 'rgba(99,102,241,0.12)' : badge === 'Favorite' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
+                color: badge === 'Recent' ? 'var(--accent-indigo)' : badge === 'Favorite' ? '#f59e0b' : '#10b981',
               }}>{badge}</span>
             )}
             {!badge && (isFrequent || isRecent) && (
@@ -198,14 +255,51 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
           className="food-search-input"
           placeholder="Search foods... (e.g., chicken breast, banana, rice)"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => { setQuery(e.target.value); setShowingFavorites(false); }}
           onFocus={handleFocus}
         />
+        {/* Favorites star button */}
+        <button
+          onClick={() => {
+            if (showingFavorites) {
+              setShowingFavorites(false);
+              setShowResults(false);
+            } else {
+              setShowingFavorites(true);
+              setShowingRecents(false);
+              setShowResults(true);
+            }
+          }}
+          title={showingFavorites ? 'Hide favorites' : 'Show favorites'}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: '20px', padding: '4px 8px', lineHeight: 1,
+            color: showingFavorites ? '#f59e0b' : 'var(--text-muted)',
+            transition: 'color 0.15s',
+          }}
+        >
+          {showingFavorites ? '★' : '☆'}
+        </button>
       </div>
 
       {showResults && (
         <div className="search-results">
-          {showingRecents ? (
+          {showingFavorites ? (
+            <>
+              <div style={{
+                padding: '8px 14px', fontSize: '11px', fontWeight: 700,
+                color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px',
+                borderBottom: '1px solid var(--border-primary)',
+              }}>★ Favorites</div>
+              {favoriteFoods.length === 0 ? (
+                <div className="search-loading" style={{ color: 'var(--text-muted)' }}>
+                  No favorites yet — tap ☆ on any food to save it
+                </div>
+              ) : (
+                favoriteFoods.map((food, idx) => renderFoodItem(food, idx, 'Favorite'))
+              )}
+            </>
+          ) : showingRecents ? (
             <>
               {recentFoods.length > 0 && (
                 <>

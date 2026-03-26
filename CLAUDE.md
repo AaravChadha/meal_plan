@@ -103,7 +103,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 
 #### 2.3 Food Log Enhancements
 - [x] 2.3.1 All custom foods, combos, favorites, and baselines persist in DB (not code) — tied to user ID, survive restarts/deploys ✅
-- [ ] 2.3.2 Favorite foods — star items for quick access
+- [x] 2.3.2 Favorite foods — star items for quick access ✅
 - [x] 2.3.3 Recent foods — show last 10 logged items at top of search ✅ (done in 2.1.4)
 - [ ] 2.3.4 Custom food entry — add your own foods with nutrition info
 - [ ] 2.3.5 Edit logged entries — tap a logged item to change servings, swap to a different food, or delete it (inline edit, no page navigation)
