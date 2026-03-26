@@ -447,34 +447,35 @@ export default function FoodLogPage() {
                         {isChecked && <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>✓</span>}
                       </div>
 
-                      {/* Food info — clicking opens swap search when checked */}
+                      {/* Food info — clicking anywhere toggles check, swap button is separate */}
                       <div
                         className="meal-item-info"
-                        style={{ cursor: isChecked ? 'pointer' : 'default' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isChecked) {
-                            setSwappingSlotId(isSwapping ? null : slot.id);
-                            setSwapQuery('');
-                            setSwapResults([]);
-                          } else {
-                            handleBaselineToggle(slot);
-                          }
-                        }}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleBaselineToggle(slot)}
                       >
-                        <div className="meal-item-name">
-                          {slot.slot_name}
-                          {isChecked && (
-                            <span style={{ fontSize: '10px', color: 'var(--accent-primary)', marginLeft: '6px', fontWeight: 400 }}>
-                              tap to swap
-                            </span>
-                          )}
-                        </div>
-                        <div className="meal-item-detail">
+                        <div className="meal-item-name">{slot.slot_name}</div>
+                        <div className="meal-item-detail" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           {displayName
                             ? <>{displayName}{displayBrand ? ` · ${displayBrand}` : ''}</>
                             : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No default item set</span>
                           }
+                          {isChecked && (
+                            <button
+                              style={{
+                                fontSize: '10px', color: 'var(--accent-primary)', background: 'rgba(99,102,241,0.1)',
+                                border: '1px solid rgba(99,102,241,0.3)', borderRadius: '8px',
+                                padding: '1px 6px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSwappingSlotId(isSwapping ? null : slot.id);
+                                setSwapQuery('');
+                                setSwapResults([]);
+                              }}
+                            >
+                              swap
+                            </button>
+                          )}
                         </div>
                       </div>
 
