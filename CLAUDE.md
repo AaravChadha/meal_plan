@@ -158,6 +158,7 @@ Make it smart at Purdue dining courts and give useful insights over time.
 - [ ] 3.3.4 Body fat % tracking over time (if entered)
 - [ ] 3.3.5 Macro distribution pie chart per day
 - [ ] 3.3.6 Calorie trend line with target overlay
+- [ ] 3.3.7 Analytics UI polish — fix colors for consistency, use bar charts for daily data (not line — we're not tracking time within a day), better chart legends and labels
 
 #### 3.4 Body Recomp Tracking
 - [ ] 3.4.1 Progress photos — upload weekly photos, view side-by-side comparison over time
