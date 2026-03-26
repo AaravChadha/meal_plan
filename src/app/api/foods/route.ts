@@ -99,3 +99,51 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }
+
+// PUT /api/foods — Edit a custom food (only your own)
+export async function PUT(request: NextRequest) {
+  const userId = getSessionUser(request);
+  if (!userId) return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+
+  const body = await request.json();
+  if (!body.id) return NextResponse.json({ success: false, error: 'id required' }, { status: 400 });
+
+  const db = getDb();
+
+  // Only allow editing your own custom foods
+  const existing = db.prepare('SELECT id FROM food_items WHERE id = ? AND is_custom = 1 AND user_id = ?').get(body.id, userId);
+  if (!existing) return NextResponse.json({ success: false, error: 'Food not found or not yours' }, { status: 403 });
+
+  db.prepare(`
+    UPDATE food_items SET name = ?, brand = ?, serving_size = ?, serving_unit = ?,
+      calories = ?, protein_g = ?, carbs_g = ?, fat_g = ?, fiber_g = ?,
+      sugar_g = ?, sodium_mg = ?, cholesterol_mg = ?, saturated_fat_g = ?
+    WHERE id = ? AND user_id = ?
+  `).run(
+    body.name, body.brand || null, body.serving_size || 100, body.serving_unit || 'g',
+    body.calories || 0, body.protein_g || 0, body.carbs_g || 0, body.fat_g || 0, body.fiber_g || 0,
+    body.sugar_g || 0, body.sodium_mg || 0, body.cholesterol_mg || 0, body.saturated_fat_g || 0,
+    body.id, userId,
+  );
+
+  return NextResponse.json({ success: true });
+}
+
+// DELETE /api/foods?id=123 — Delete a custom food (only your own)
+export async function DELETE(request: NextRequest) {
+  const userId = getSessionUser(request);
+  if (!userId) return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+
+  const id = request.nextUrl.searchParams.get('id');
+  if (!id) return NextResponse.json({ success: false, error: 'id required' }, { status: 400 });
+
+  const db = getDb();
+  const result = db.prepare('DELETE FROM food_items WHERE id = ? AND is_custom = 1 AND user_id = ?').run(parseInt(id), userId);
+
+  if (result.changes === 0) return NextResponse.json({ success: false, error: 'Food not found or not yours' }, { status: 403 });
+
+  // Also clean up any favorites referencing this food
+  db.prepare('DELETE FROM favorite_foods WHERE food_item_id = ?').run(parseInt(id));
+
+  return NextResponse.json({ success: true });
+}

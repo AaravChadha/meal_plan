@@ -36,6 +36,15 @@ const navItems = [
     ),
   },
   {
+    href: '/my-foods',
+    label: 'My Foods',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 3h18v18H3zM12 8v8M8 12h8" />
+      </svg>
+    ),
+  },
+  {
     href: '/grades',
     label: 'Grades',
     icon: (

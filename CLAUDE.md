@@ -105,7 +105,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [x] 2.3.1 All custom foods, combos, favorites, and baselines persist in DB (not code) — tied to user ID, survive restarts/deploys ✅
 - [x] 2.3.2 Favorite foods — star items for quick access ✅
 - [x] 2.3.3 Recent foods — show last 10 logged items at top of search ✅ (done in 2.1.4)
-- [ ] 2.3.4 "My Foods" section — view, edit, and delete your custom foods, favorites, and combos in one place
+- [x] 2.3.4 "My Foods" section — view, edit, and delete your custom foods, favorites, and combos in one place ✅
 - [ ] 2.3.5 Edit logged entries — tap a logged item to change servings, swap to a different food, or delete it (inline edit, no page navigation)
 - [ ] 2.3.6 Drag and drop food items between meals — move an item from breakfast to lunch if added to the wrong meal
 - [ ] 2.3.7 Copy meals from a previous day
