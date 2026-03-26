@@ -171,6 +171,54 @@ export default function FoodLogPage() {
     }
   };
 
+  // Baseline swap: which slot has the inline search open
+  const [swappingSlotId, setSwappingSlotId] = useState<number | null>(null);
+  const [swapQuery, setSwapQuery] = useState('');
+  const [swapResults, setSwapResults] = useState<FoodResult[]>([]);
+
+  const handleSwapSearch = async (query: string) => {
+    setSwapQuery(query);
+    if (query.length < 2) { setSwapResults([]); return; }
+    try {
+      const res = await fetch(`/api/foods?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.success) setSwapResults(data.data);
+    } catch {}
+  };
+
+  const handleSwapSelect = async (slotId: number, food: FoodResult) => {
+    const entry = meals.find(m => m.baseline_slot_id === slotId);
+    if (!entry) return;
+
+    let foodItemId = food.id;
+    // If external food, save locally first
+    if (!foodItemId && (food.source === 'usda' || food.source === 'openfoodfacts')) {
+      const saveRes = await fetch('/api/foods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(food),
+      });
+      const saveData = await saveRes.json();
+      if (saveData.success) foodItemId = saveData.data.id;
+    }
+    if (!foodItemId) return;
+
+    try {
+      await fetch('/api/food-log', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: entry.id, food_item_id: foodItemId }),
+      });
+      setSwappingSlotId(null);
+      setSwapQuery('');
+      setSwapResults([]);
+      fetchMeals();
+      showToastMsg(`Swapped to ${food.name}`);
+    } catch (err) {
+      console.error('Error swapping baseline item:', err);
+    }
+  };
+
   // Baseline totals
   const baselineEntries = meals.filter(m => m.baseline_slot_id);
   const baselineTotalCal = baselineEntries.reduce((sum, m) => sum + m.calories * m.servings, 0);
@@ -372,56 +420,134 @@ export default function FoodLogPage() {
                 const carb = isChecked && entry ? Math.round(entry.carbs_g * entry.servings) : (slot.carbs_g ? Math.round(slot.carbs_g) : 0);
                 const fat = isChecked && entry ? Math.round(entry.fat_g * entry.servings) : (slot.fat_g ? Math.round(slot.fat_g) : 0);
 
+                const isSwapping = swappingSlotId === slot.id;
+                const displayName = isChecked && entry ? entry.food_name : slot.food_name;
+                const displayBrand = isChecked && entry ? entry.brand : slot.brand;
+
                 return (
-                  <div
-                    key={slot.id}
-                    className="meal-item"
-                    style={{
-                      cursor: 'pointer',
-                      opacity: isChecked ? 1 : 0.6,
-                      transition: 'opacity 0.2s',
-                    }}
-                    onClick={() => handleBaselineToggle(slot)}
-                  >
-                    {/* Checkbox */}
-                    <div style={{
-                      width: 22, height: 22, borderRadius: '4px', flexShrink: 0,
-                      border: isChecked ? '2px solid var(--accent-primary)' : '2px solid var(--border-primary)',
-                      background: isChecked ? 'var(--accent-primary)' : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.2s',
-                    }}>
-                      {isChecked && <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>✓</span>}
+                  <div key={slot.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div
+                      className="meal-item"
+                      style={{
+                        opacity: isChecked ? 1 : 0.6,
+                        transition: 'opacity 0.2s',
+                      }}
+                    >
+                      {/* Checkbox — toggles check/uncheck */}
+                      <div
+                        style={{
+                          width: 22, height: 22, borderRadius: '4px', flexShrink: 0, cursor: 'pointer',
+                          border: isChecked ? '2px solid var(--accent-primary)' : '2px solid var(--border-primary)',
+                          background: isChecked ? 'var(--accent-primary)' : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.2s',
+                        }}
+                        onClick={() => handleBaselineToggle(slot)}
+                      >
+                        {isChecked && <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700 }}>✓</span>}
+                      </div>
+
+                      {/* Food info — clicking opens swap search when checked */}
+                      <div
+                        className="meal-item-info"
+                        style={{ cursor: isChecked ? 'pointer' : 'default' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isChecked) {
+                            setSwappingSlotId(isSwapping ? null : slot.id);
+                            setSwapQuery('');
+                            setSwapResults([]);
+                          } else {
+                            handleBaselineToggle(slot);
+                          }
+                        }}
+                      >
+                        <div className="meal-item-name">
+                          {slot.slot_name}
+                          {isChecked && (
+                            <span style={{ fontSize: '10px', color: 'var(--accent-primary)', marginLeft: '6px', fontWeight: 400 }}>
+                              tap to swap
+                            </span>
+                          )}
+                        </div>
+                        <div className="meal-item-detail">
+                          {displayName
+                            ? <>{displayName}{displayBrand ? ` · ${displayBrand}` : ''}</>
+                            : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No default item set</span>
+                          }
+                        </div>
+                      </div>
+
+                      <div className="meal-item-nutrients">
+                        <div className="meal-item-nutrient">
+                          <div className="meal-item-nutrient-value" style={{ color: 'var(--color-calories)' }}>{cal}</div>
+                          <div className="meal-item-nutrient-label">cal</div>
+                        </div>
+                        <div className="meal-item-nutrient">
+                          <div className="meal-item-nutrient-value" style={{ color: 'var(--color-protein)' }}>{prot}g</div>
+                          <div className="meal-item-nutrient-label">protein</div>
+                        </div>
+                        <div className="meal-item-nutrient">
+                          <div className="meal-item-nutrient-value" style={{ color: 'var(--color-carbs)' }}>{carb}g</div>
+                          <div className="meal-item-nutrient-label">carbs</div>
+                        </div>
+                        <div className="meal-item-nutrient">
+                          <div className="meal-item-nutrient-value" style={{ color: 'var(--color-fat)' }}>{fat}g</div>
+                          <div className="meal-item-nutrient-label">fat</div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="meal-item-info">
-                      <div className="meal-item-name">{slot.slot_name}</div>
-                      <div className="meal-item-detail">
-                        {slot.food_name
-                          ? <>{slot.food_name}{slot.brand ? ` · ${slot.brand}` : ''}</>
-                          : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No default item set</span>
-                        }
+                    {/* Inline swap search */}
+                    {isSwapping && (
+                      <div style={{
+                        padding: '8px 12px 12px 46px',
+                        background: 'var(--bg-elevated)',
+                        borderTop: '1px solid var(--border-primary)',
+                      }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Search for a different food..."
+                          value={swapQuery}
+                          onChange={(e) => handleSwapSearch(e.target.value)}
+                          autoFocus
+                          style={{ fontSize: '13px', marginBottom: '6px' }}
+                        />
+                        {swapResults.length > 0 && (
+                          <div style={{ maxHeight: '150px', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {swapResults.slice(0, 8).map((food, i) => (
+                              <div
+                                key={`${food.id ?? food.name}-${i}`}
+                                style={{
+                                  padding: '6px 8px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                                  fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                  background: 'var(--bg-card)',
+                                }}
+                                onClick={() => handleSwapSelect(slot.id, food)}
+                                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--bg-card)')}
+                              >
+                                <div>
+                                  <span style={{ fontWeight: 600 }}>{food.name}</span>
+                                  {food.brand && <span style={{ color: 'var(--text-muted)' }}> · {food.brand}</span>}
+                                </div>
+                                <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                  {Math.round(food.calories)} cal · {Math.round(food.protein_g)}p
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => { setSwappingSlotId(null); setSwapQuery(''); setSwapResults([]); }}
+                          style={{ marginTop: '6px', fontSize: '11px' }}
+                        >
+                          Cancel
+                        </button>
                       </div>
-                    </div>
-
-                    <div className="meal-item-nutrients">
-                      <div className="meal-item-nutrient">
-                        <div className="meal-item-nutrient-value" style={{ color: 'var(--color-calories)' }}>{cal}</div>
-                        <div className="meal-item-nutrient-label">cal</div>
-                      </div>
-                      <div className="meal-item-nutrient">
-                        <div className="meal-item-nutrient-value" style={{ color: 'var(--color-protein)' }}>{prot}g</div>
-                        <div className="meal-item-nutrient-label">protein</div>
-                      </div>
-                      <div className="meal-item-nutrient">
-                        <div className="meal-item-nutrient-value" style={{ color: 'var(--color-carbs)' }}>{carb}g</div>
-                        <div className="meal-item-nutrient-label">carbs</div>
-                      </div>
-                      <div className="meal-item-nutrient">
-                        <div className="meal-item-nutrient-value" style={{ color: 'var(--color-fat)' }}>{fat}g</div>
-                        <div className="meal-item-nutrient-label">fat</div>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}

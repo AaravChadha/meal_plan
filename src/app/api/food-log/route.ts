@@ -80,6 +80,37 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PUT /api/food-log — update an entry (swap food, change servings)
+export async function PUT(request: NextRequest) {
+  const userId = getSessionUser(request);
+  if (!userId) return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+
+  try {
+    const { id, food_item_id, servings } = await request.json();
+    if (!id) return NextResponse.json({ success: false, error: 'id required' }, { status: 400 });
+
+    const db = getDb();
+    // Verify ownership
+    const entry = db.prepare('SELECT id FROM food_log WHERE id = ? AND user_id = ?').get(id, userId);
+    if (!entry) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+
+    const updates: string[] = [];
+    const values: (number)[] = [];
+    if (food_item_id !== undefined) { updates.push('food_item_id = ?'); values.push(food_item_id); }
+    if (servings !== undefined) { updates.push('servings = ?'); values.push(servings); }
+
+    if (updates.length > 0) {
+      values.push(id);
+      db.prepare(`UPDATE food_log SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  }
+}
+
 // DELETE /api/food-log?id=123
 export async function DELETE(request: NextRequest) {
   try {
