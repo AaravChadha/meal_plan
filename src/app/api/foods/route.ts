@@ -138,12 +138,19 @@ export async function DELETE(request: NextRequest) {
   if (!id) return NextResponse.json({ success: false, error: 'id required' }, { status: 400 });
 
   const db = getDb();
-  const result = db.prepare('DELETE FROM food_items WHERE id = ? AND is_custom = 1 AND user_id = ?').run(parseInt(id), userId);
+  const foodId = parseInt(id);
 
-  if (result.changes === 0) return NextResponse.json({ success: false, error: 'Food not found or not yours' }, { status: 403 });
+  // Verify it's the user's custom food before deleting
+  const existing = db.prepare('SELECT id FROM food_items WHERE id = ? AND is_custom = 1 AND user_id = ?').get(foodId, userId);
+  if (!existing) return NextResponse.json({ success: false, error: 'Food not found or not yours' }, { status: 403 });
 
-  // Also clean up any favorites referencing this food
-  db.prepare('DELETE FROM favorite_foods WHERE food_item_id = ?').run(parseInt(id));
+  // Clean up all references first (foreign key constraints)
+  db.prepare('DELETE FROM food_log WHERE food_item_id = ? AND user_id = ?').run(foodId, userId);
+  db.prepare('UPDATE baseline_slots SET default_food_id = NULL WHERE default_food_id = ? AND user_id = ?').run(foodId, userId);
+  db.prepare('DELETE FROM favorite_foods WHERE food_item_id = ?').run(foodId);
+
+  // Now delete the food item
+  db.prepare('DELETE FROM food_items WHERE id = ? AND is_custom = 1 AND user_id = ?').run(foodId, userId);
 
   return NextResponse.json({ success: true });
 }
