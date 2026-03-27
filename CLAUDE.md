@@ -297,4 +297,4 @@ Keep the main repo PUBLIC (portfolio). AI-specific assets go in a SEPARATE PRIVA
 - **Middleware is Edge runtime** — cannot import better-sqlite3 or anything from src/lib/auth.ts.
 - **Session cookie name**: `nt_session` — hardcoded in both middleware.ts and auth.ts, keep in sync.
 - **SQLite strings**: use single quotes in SQL (`datetime('now')`), double quotes = column identifiers.
-- **Commit messages**: format as `Completed X.Y.Z (short description)` — task number first, then a few words describing what was done. Match the style of existing commits (e.g. `Completed 2.4.1 (asymmetric grading per goal)`).
+- **Commit messages**: format as `Completed X.Y.Z (short description)` — task number first, then a few words describing what was done. Match the style of existing commits (e.g. `Completed 2.4.1 (asymmetric grading per goal)`). No co-author lines. If no task was completed, just a short description.
