@@ -26,6 +26,7 @@ interface FoodResult {
 
 interface MealEntry {
   id: number;
+  food_item_id: number;
   meal_type: string;
   servings: number;
   food_name: string;
@@ -102,6 +103,9 @@ export default function FoodLogPage() {
   const [editSwapping, setEditSwapping] = useState(false);
   const [editSwapQuery, setEditSwapQuery] = useState('');
   const [editSwapResults, setEditSwapResults] = useState<FoodResult[]>([]);
+
+  // Copy/paste meal state
+  const [copiedMeal, setCopiedMeal] = useState<{ type: string; entries: MealEntry[] } | null>(null);
 
   const fetchMeals = useCallback(async () => {
     try {
@@ -438,6 +442,35 @@ export default function FoodLogPage() {
     setCustomFood(prev => ({ ...prev, calories: cal }));
   };
 
+  const handleCopyMeal = (type: string, entries: MealEntry[]) => {
+    if (entries.length === 0) { showToastMsg('Nothing to copy'); return; }
+    setCopiedMeal({ type, entries });
+    showToastMsg(`Copied ${entries.length} item${entries.length > 1 ? 's' : ''} from ${MEAL_LABELS[type]}`);
+  };
+
+  const handlePasteMeal = async (targetMealType: string) => {
+    if (!copiedMeal || copiedMeal.entries.length === 0) return;
+    try {
+      for (const entry of copiedMeal.entries) {
+        const res = await fetch('/api/food-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            food_item_id: entry.food_item_id,
+            meal_type: targetMealType,
+            servings: entry.servings,
+            logged_date: date,
+          }),
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+      }
+      fetchMeals();
+      showToastMsg(`Pasted ${copiedMeal.entries.length} item${copiedMeal.entries.length > 1 ? 's' : ''} to ${MEAL_LABELS[targetMealType]}`);
+    } catch (err) {
+      console.error('Error pasting meal:', err);
+    }
+  };
+
   // Exclude baseline entries from meal sections (they show in their own section)
   const nonBaselineMeals = meals.filter(m => !m.baseline_slot_id);
   const mealGroups = ['breakfast', 'lunch', 'dinner', 'snack'].map((type) => ({
@@ -641,6 +674,34 @@ export default function FoodLogPage() {
                 <div className="meal-header-left">
                   <span className="meal-icon">{MEAL_ICONS[group.type]}</span>
                   <span className="meal-name">{MEAL_LABELS[group.type]}</span>
+                  <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
+                    {group.entries.length > 0 && (
+                      <button
+                        title="Copy this meal"
+                        onClick={() => handleCopyMeal(group.type, group.entries)}
+                        style={{
+                          background: copiedMeal?.type === group.type ? 'rgba(99,102,241,0.15)' : 'transparent',
+                          border: 'none', cursor: 'pointer', fontSize: '13px', padding: '2px 6px',
+                          borderRadius: '4px', color: 'var(--text-muted)', opacity: 0.7,
+                        }}
+                      >
+                        📋
+                      </button>
+                    )}
+                    {copiedMeal && copiedMeal.entries.length > 0 && (
+                      <button
+                        title={`Paste ${copiedMeal.entries.length} items from ${MEAL_LABELS[copiedMeal.type]}`}
+                        onClick={() => handlePasteMeal(group.type)}
+                        style={{
+                          background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
+                          cursor: 'pointer', fontSize: '11px', padding: '2px 8px',
+                          borderRadius: '8px', color: '#10b981', fontWeight: 600,
+                        }}
+                      >
+                        📌 Paste {copiedMeal.entries.length}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <span className="meal-calories">{Math.round(group.totalCal)} cal</span>
               </div>
