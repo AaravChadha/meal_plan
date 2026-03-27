@@ -107,7 +107,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [x] 2.3.3 Recent foods — show last 10 logged items at top of search ✅ (done in 2.1.4)
 - [x] 2.3.4 "My Foods" section — view, edit, and delete your custom foods, favorites, and combos in one place ✅
 - [x] 2.3.5 Edit logged entries — tap a logged item to change servings, swap to a different food, or delete it (inline edit, no page navigation) ✅
-- [ ] 2.3.6 Drag and drop food items between meals — move an item from breakfast to lunch if added to the wrong meal
+- [x] 2.3.6 Move food items between meals — use the meal dropdown in inline edit (2.3.5) instead of drag and drop ✅
 - [ ] 2.3.7 Copy meals from a previous day
 - [ ] 2.3.8 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa"). NOT full meals — just a few station items that go together.
 - [ ] 2.3.9 Adding a combo logs each item separately so you can remove/edit individual items after
