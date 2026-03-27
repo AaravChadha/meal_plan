@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest) {
   if (!userId) return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
 
   try {
-    const { id, food_item_id, servings } = await request.json();
+    const { id, food_item_id, servings, meal_type } = await request.json();
     if (!id) return NextResponse.json({ success: false, error: 'id required' }, { status: 400 });
 
     const db = getDb();
@@ -95,9 +95,10 @@ export async function PUT(request: NextRequest) {
     if (!entry) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
 
     const updates: string[] = [];
-    const values: (number)[] = [];
+    const values: (number | string)[] = [];
     if (food_item_id !== undefined) { updates.push('food_item_id = ?'); values.push(food_item_id); }
     if (servings !== undefined) { updates.push('servings = ?'); values.push(servings); }
+    if (meal_type !== undefined) { updates.push('meal_type = ?'); values.push(meal_type); }
 
     if (updates.length > 0) {
       values.push(id);

@@ -95,6 +95,14 @@ export default function FoodLogPage() {
   const [customFood, setCustomFood] = useState({ ...EMPTY_CUSTOM_FOOD });
   const [toast, setToast] = useState<string | null>(null);
 
+  // Inline edit state
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editServings, setEditServings] = useState<number | ''>(1);
+  const [editMealType, setEditMealType] = useState('breakfast');
+  const [editSwapping, setEditSwapping] = useState(false);
+  const [editSwapQuery, setEditSwapQuery] = useState('');
+  const [editSwapResults, setEditSwapResults] = useState<FoodResult[]>([]);
+
   const fetchMeals = useCallback(async () => {
     try {
       const res = await fetch(`/api/food-log?date=${date}`);
@@ -324,10 +332,79 @@ export default function FoodLogPage() {
     try {
       const delRes = await fetch(`/api/food-log?id=${id}`, { method: 'DELETE' });
       if (delRes.status === 401) { window.location.href = '/login'; return; }
+      setEditingId(null);
       fetchMeals();
       showToastMsg('Entry removed');
     } catch (err) {
       console.error('Error deleting entry:', err);
+    }
+  };
+
+  const startEditing = (entry: MealEntry) => {
+    setEditingId(entry.id);
+    setEditServings(entry.servings);
+    setEditMealType(entry.meal_type);
+    setEditSwapping(false);
+    setEditSwapQuery('');
+    setEditSwapResults([]);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingId) return;
+    try {
+      const res = await fetch('/api/food-log', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingId,
+          servings: editServings || 1,
+          meal_type: editMealType,
+        }),
+      });
+      if (res.status === 401) { window.location.href = '/login'; return; }
+      setEditingId(null);
+      fetchMeals();
+      showToastMsg('Entry updated');
+    } catch (err) {
+      console.error('Error updating entry:', err);
+    }
+  };
+
+  const handleEditSwapSearch = async (query: string) => {
+    setEditSwapQuery(query);
+    if (query.length < 2) { setEditSwapResults([]); return; }
+    try {
+      const res = await fetch(`/api/foods?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.success) setEditSwapResults(data.data);
+    } catch {}
+  };
+
+  const handleEditSwapSelect = async (food: FoodResult) => {
+    if (!editingId) return;
+    let foodItemId = food.id;
+    if (!foodItemId && (food.source === 'usda' || food.source === 'openfoodfacts')) {
+      const saveRes = await fetch('/api/foods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(food),
+      });
+      const saveData = await saveRes.json();
+      if (saveData.success) foodItemId = saveData.data.id;
+    }
+    if (!foodItemId) return;
+    try {
+      await fetch('/api/food-log', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingId, food_item_id: foodItemId }),
+      });
+      setEditingId(null);
+      setEditSwapping(false);
+      fetchMeals();
+      showToastMsg(`Swapped to ${food.name}`);
+    } catch (err) {
+      console.error('Error swapping food:', err);
     }
   };
 
@@ -573,51 +650,181 @@ export default function FoodLogPage() {
                     No foods logged for {MEAL_LABELS[group.type].toLowerCase()} yet
                   </div>
                 ) : (
-                  group.entries.map((entry) => (
-                    <div key={entry.id} className="meal-item">
-                      <div className="meal-item-info">
-                        <div className="meal-item-name">{entry.food_name}</div>
-                        <div className="meal-item-detail">
-                          {entry.servings !== 1 ? `${entry.servings}× ` : ''}
-                          {entry.serving_size}{entry.serving_unit}
-                          {entry.brand ? ` · ${entry.brand}` : ''}
+                  group.entries.map((entry) => {
+                    const isEditing = editingId === entry.id;
+                    const s = isEditing ? (editServings || 0) : entry.servings;
+                    return (
+                      <div key={entry.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div
+                          className="meal-item"
+                          style={{ cursor: 'pointer', background: isEditing ? 'var(--bg-elevated)' : undefined }}
+                          onClick={() => isEditing ? null : startEditing(entry)}
+                        >
+                          <div className="meal-item-info">
+                            <div className="meal-item-name">{entry.food_name}</div>
+                            <div className="meal-item-detail">
+                              {entry.servings !== 1 ? `${entry.servings}× ` : ''}
+                              {entry.serving_size}{entry.serving_unit}
+                              {entry.brand ? ` · ${entry.brand}` : ''}
+                            </div>
+                          </div>
+                          <div className="meal-item-nutrients">
+                            <div className="meal-item-nutrient">
+                              <div className="meal-item-nutrient-value" style={{ color: 'var(--color-calories)' }}>
+                                {Math.round(entry.calories * s)}
+                              </div>
+                              <div className="meal-item-nutrient-label">cal</div>
+                            </div>
+                            <div className="meal-item-nutrient">
+                              <div className="meal-item-nutrient-value" style={{ color: 'var(--color-protein)' }}>
+                                {Math.round(entry.protein_g * s)}g
+                              </div>
+                              <div className="meal-item-nutrient-label">protein</div>
+                            </div>
+                            <div className="meal-item-nutrient">
+                              <div className="meal-item-nutrient-value" style={{ color: 'var(--color-carbs)' }}>
+                                {Math.round(entry.carbs_g * s)}g
+                              </div>
+                              <div className="meal-item-nutrient-label">carbs</div>
+                            </div>
+                            <div className="meal-item-nutrient">
+                              <div className="meal-item-nutrient-value" style={{ color: 'var(--color-fat)' }}>
+                                {Math.round(entry.fat_g * s)}g
+                              </div>
+                              <div className="meal-item-nutrient-label">fat</div>
+                            </div>
+                          </div>
+                          {!isEditing && (
+                            <button
+                              className="meal-item-delete"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteEntry(entry.id); }}
+                              title="Remove"
+                            >
+                              ✕
+                            </button>
+                          )}
                         </div>
+
+                        {/* Inline edit panel */}
+                        {isEditing && (
+                          <div style={{
+                            padding: '12px 16px',
+                            background: 'var(--bg-elevated)',
+                            borderTop: '1px solid var(--border-primary)',
+                            display: 'flex', flexDirection: 'column', gap: '10px',
+                          }}>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Servings</label>
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  value={editServings}
+                                  onChange={(e) => setEditServings(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                  onBlur={() => { if (!editServings || editServings < 0.25) setEditServings(1); }}
+                                  min="0.25"
+                                  step="0.25"
+                                  style={{ fontSize: '13px' }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Meal</label>
+                                <select
+                                  className="form-select"
+                                  value={editMealType}
+                                  onChange={(e) => setEditMealType(e.target.value)}
+                                  style={{ fontSize: '13px' }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <option value="breakfast">🌅 Breakfast</option>
+                                  <option value="lunch">☀️ Lunch</option>
+                                  <option value="dinner">🌙 Dinner</option>
+                                  <option value="snack">🍎 Snack</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Swap food search */}
+                            {editSwapping ? (
+                              <div>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  placeholder="Search for a different food..."
+                                  value={editSwapQuery}
+                                  onChange={(e) => handleEditSwapSearch(e.target.value)}
+                                  autoFocus
+                                  style={{ fontSize: '13px', marginBottom: '6px' }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                {editSwapResults.length > 0 && (
+                                  <div style={{ maxHeight: '150px', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    {editSwapResults.slice(0, 8).map((food, i) => (
+                                      <div
+                                        key={`${food.id ?? food.name}-${i}`}
+                                        style={{
+                                          padding: '6px 8px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                                          fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                          background: 'var(--bg-card)',
+                                        }}
+                                        onClick={(e) => { e.stopPropagation(); handleEditSwapSelect(food); }}
+                                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                                        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--bg-card)')}
+                                      >
+                                        <div>
+                                          <span style={{ fontWeight: 600 }}>{food.name}</span>
+                                          {food.brand && <span style={{ color: 'var(--text-muted)' }}> · {food.brand}</span>}
+                                        </div>
+                                        <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                          {Math.round(food.calories)} cal · {Math.round(food.protein_g)}p
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
+
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ fontSize: '11px' }}
+                                  onClick={(e) => { e.stopPropagation(); setEditSwapping(!editSwapping); setEditSwapQuery(''); setEditSwapResults([]); }}
+                                >
+                                  {editSwapping ? 'Cancel swap' : '🔄 Swap food'}
+                                </button>
+                                <button
+                                  className="btn btn-sm"
+                                  style={{ fontSize: '11px', color: '#ef4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteEntry(entry.id); }}
+                                >
+                                  🗑 Delete
+                                </button>
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ fontSize: '11px' }}
+                                  onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  style={{ fontSize: '11px' }}
+                                  onClick={(e) => { e.stopPropagation(); handleEditSave(); }}
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="meal-item-nutrients">
-                        <div className="meal-item-nutrient">
-                          <div className="meal-item-nutrient-value" style={{ color: 'var(--color-calories)' }}>
-                            {Math.round(entry.calories * entry.servings)}
-                          </div>
-                          <div className="meal-item-nutrient-label">cal</div>
-                        </div>
-                        <div className="meal-item-nutrient">
-                          <div className="meal-item-nutrient-value" style={{ color: 'var(--color-protein)' }}>
-                            {Math.round(entry.protein_g * entry.servings)}g
-                          </div>
-                          <div className="meal-item-nutrient-label">protein</div>
-                        </div>
-                        <div className="meal-item-nutrient">
-                          <div className="meal-item-nutrient-value" style={{ color: 'var(--color-carbs)' }}>
-                            {Math.round(entry.carbs_g * entry.servings)}g
-                          </div>
-                          <div className="meal-item-nutrient-label">carbs</div>
-                        </div>
-                        <div className="meal-item-nutrient">
-                          <div className="meal-item-nutrient-value" style={{ color: 'var(--color-fat)' }}>
-                            {Math.round(entry.fat_g * entry.servings)}g
-                          </div>
-                          <div className="meal-item-nutrient-label">fat</div>
-                        </div>
-                      </div>
-                      <button
-                        className="meal-item-delete"
-                        onClick={() => handleDeleteEntry(entry.id)}
-                        title="Remove"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
