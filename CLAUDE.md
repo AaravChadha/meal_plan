@@ -109,9 +109,10 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [x] 2.3.5 Edit logged entries — tap a logged item to change servings, swap to a different food, or delete it (inline edit, no page navigation) ✅
 - [x] 2.3.6 Move food items between meals — use the meal dropdown in inline edit (2.3.5) instead of drag and drop ✅
 - [x] 2.3.7 Copy meals from a previous day ✅
-- [ ] 2.3.8 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa"). NOT full meals — just a few station items that go together.
+- [x] 2.3.8 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa"). NOT full meals — just a few station items that go together. ✅
 - [ ] 2.3.9 Adding a combo logs each item separately so you can remove/edit individual items after
-- [ ] 2.3.10 Combo manager — create/edit/delete combos from food log or profile page
+- [x] 2.3.10 Combo manager — create/edit/delete combos from My Foods page ✅
+- [ ] 2.3.11 Auto-detect combos — if the same 2+ items appear together in the same meal 3+ times within 10 days, suggest "Save as combo?" Auto-suggestions fade if not eaten recently.
 
 #### 2.4 Grades Improvements
 - [ ] 2.4.1 Asymmetric grading per nutrient — not all macros should penalize going over equally:

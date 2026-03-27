@@ -164,6 +164,27 @@ function initTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_baseline_slots ON baseline_slots(user_id, sort_order);
   `);
 
+  // Food combos: groups of items eaten together (e.g. "Wiley rice + guac + salsa")
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS food_combos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS food_combo_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      combo_id INTEGER NOT NULL,
+      food_item_id INTEGER NOT NULL,
+      servings REAL NOT NULL DEFAULT 1,
+      FOREIGN KEY (combo_id) REFERENCES food_combos(id) ON DELETE CASCADE,
+      FOREIGN KEY (food_item_id) REFERENCES food_items(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_food_combos ON food_combos(user_id);
+    CREATE INDEX IF NOT EXISTS idx_food_combo_items ON food_combo_items(combo_id);
+  `);
+
   // No demo user seed — users register themselves
 
   // Seed common foods if table is empty
