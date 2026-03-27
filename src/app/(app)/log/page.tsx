@@ -675,12 +675,12 @@ export default function FoodLogPage() {
                   <span className="meal-icon">{MEAL_ICONS[group.type]}</span>
                   <span className="meal-name">{MEAL_LABELS[group.type]}</span>
                   <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
-                    {group.entries.length > 0 && (
+                    {group.entries.length > 0 && !copiedMeal && (
                       <button
                         title="Copy this meal"
                         onClick={() => handleCopyMeal(group.type, group.entries)}
                         style={{
-                          background: copiedMeal?.type === group.type ? 'rgba(99,102,241,0.15)' : 'transparent',
+                          background: 'transparent',
                           border: 'none', cursor: 'pointer', fontSize: '13px', padding: '2px 6px',
                           borderRadius: '4px', color: 'var(--text-muted)', opacity: 0.7,
                         }}
@@ -688,7 +688,20 @@ export default function FoodLogPage() {
                         📋
                       </button>
                     )}
-                    {copiedMeal && copiedMeal.entries.length > 0 && (
+                    {copiedMeal && copiedMeal.type === group.type && (
+                      <button
+                        title="Cancel copy"
+                        onClick={() => setCopiedMeal(null)}
+                        style={{
+                          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                          cursor: 'pointer', fontSize: '11px', padding: '2px 8px',
+                          borderRadius: '8px', color: '#ef4444', fontWeight: 600,
+                        }}
+                      >
+                        ✕ Cancel
+                      </button>
+                    )}
+                    {copiedMeal && copiedMeal.type !== group.type && (
                       <button
                         title={`Paste ${copiedMeal.entries.length} items from ${MEAL_LABELS[copiedMeal.type]}`}
                         onClick={() => handlePasteMeal(group.type)}
@@ -698,7 +711,7 @@ export default function FoodLogPage() {
                           borderRadius: '8px', color: '#10b981', fontWeight: 600,
                         }}
                       >
-                        📌 Paste {copiedMeal.entries.length}
+                        📌 Paste
                       </button>
                     )}
                   </div>
