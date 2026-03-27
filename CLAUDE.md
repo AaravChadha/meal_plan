@@ -115,20 +115,9 @@ The minimum features needed to actually use this app for daily nutrition trackin
 
 
 #### 2.4 Grades Improvements
-- [ ] 2.4.1a Asymmetric grading for **cut** — the goal is a deficit, so:
-  - **Protein**: over is GOOD up to ~150% (muscle preservation), under is bad
-  - **Fiber**: over is fine up to cap (~50g), under is bad
-  - **Carbs/Fat**: over is bad (extra calories), slightly under is ok
-  - **Calories**: over is bad, slightly under is ok (already done in 1.1.4)
-  - **Sodium**: over is bad, under is fine (already done)
-- [ ] 2.4.1b Asymmetric grading for **maintain** — symmetric, hitting target is the goal:
-  - All macros: penalize going too far over OR under equally
-  - Protein: still reward slightly over (muscle maintenance)
-- [ ] 2.4.1c Asymmetric grading for **bulk** — the goal is a surplus, so:
-  - **Calories**: under is bad (need the surplus), hitting/slightly over is ok
-  - **Protein**: over is GOOD (same as cut — muscle building)
-  - **Carbs**: over is more acceptable (fuel for growth)
-  - **Fat**: over is worse (easy to overshoot into excessive fat gain)
+- [x] 2.4.1a Asymmetric grading for **cut** — protein over is good, carbs/fat under is ok, over is bad ✅
+- [x] 2.4.1b Asymmetric grading for **maintain** — symmetric for carbs/fat, protein over still rewarded ✅
+- [x] 2.4.1c Asymmetric grading for **bulk** — carbs over more acceptable, under is bad, protein over is good ✅
 - [ ] 2.4.2 "Why did I get this grade?" breakdown — show exactly which macros pulled you up or down (e.g. "protein 40g short → dropped from A to B-")
 - [ ] 2.4.3 Time-aware grading — toggle between "so far" (scales targets to current time of day, e.g. at 2pm only judge against ~60% of daily targets) and "full day" (current behavior). Default to "so far" on today, "full day" on past dates. This way you see a realistic grade throughout the day instead of F until dinner.
 - [ ] 2.4.4 Grade trend chart — average grade over weeks/months, are you improving?

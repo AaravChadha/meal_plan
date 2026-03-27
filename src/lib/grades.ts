@@ -72,31 +72,72 @@ export const GRADE_COLORS: Record<LetterGrade, string> = {
   'F':  '#ff6b6b', // red
 };
 
-// ── Score a single "hit" nutrient (protein, fiber, carbs, fat) ────────
-// You want to hit the target. Going slightly over is fine, but extreme
-// over-eating wastes calories (or causes GI issues for fiber).
-// Extreme under-eating means you're missing important macros.
-function scoreHitNutrient(current: number, target: number): number {
+// ── Score protein ──────────────────────────────────────────────────────
+// Over is GOOD up to ~150% — preserves muscle on cut, supports recovery.
+// Under is bad — muscle loss risk on cut, missed gains on bulk.
+// Over 150%: diminishing returns, wastes calories.
+function scoreProtein(current: number, target: number): number {
+  if (target === 0) return 100;
+  const pct = (current / target) * 100;
+  if (pct >= 90 && pct <= 150) return 100;  // 90–150%: all great
+  if (pct >= 80 && pct < 90) return 85;
+  if (pct > 150 && pct <= 180) return 90;   // over 150: mild penalty
+  if (pct >= 70 && pct < 80) return 72;
+  if (pct > 180) return 75;                 // way over: wasteful
+  if (pct >= 60 && pct < 70) return 60;
+  return Math.max(15, Math.round(pct * 0.5));
+}
+
+// ── Score fiber ──────────────────────────────────────────────────────
+// Over is fine up to 50g cap. Under is bad (poor digestion, less satiety).
+function scoreFiber(current: number, target: number): number {
+  if (target === 0) return 100;
+  const pct = (current / target) * 100;
+  if (pct >= 85 && pct <= 100) return 100;
+  if (pct > 100 && current <= 50) return 100; // over but under 50g cap
+  if (current > 50) return 80;                 // GI discomfort risk
+  if (pct >= 70 && pct < 85) return 83;
+  if (pct >= 55 && pct < 70) return 68;
+  return Math.max(20, Math.round(pct * 0.7));
+}
+
+// ── Score carbs/fat ──────────────────────────────────────────────────
+// Goal-aware: on cut, under is ok (fewer calories = good). Over is bad.
+// On bulk: more symmetric. On maintain: fully symmetric.
+function scoreCarbsFat(current: number, target: number, goal: string = 'maintain'): number {
   if (target === 0) return 100;
   const pct = (current / target) * 100;
 
-  // Sweet spot: 90–120% of target
-  if (pct >= 90 && pct <= 120) return 100;
-  // Slightly over (120–150%): mostly fine, minor penalty
-  if (pct > 120 && pct <= 150) return 90;
-  // Slightly under (80–90%)
-  if (pct >= 80 && pct < 90) return 87;
-  // Excessive over (150–200%): wasteful, crowds out other macros
-  if (pct > 150 && pct <= 200) return 75;
-  // More under (70–80%)
-  if (pct >= 70 && pct < 80) return 75;
-  // Way over (>200%): not beneficial, potentially harmful
-  if (pct > 200) return 60;
-  // Significantly under (60–70%)
-  if (pct >= 60 && pct < 70) return 65;
-  // Very under (<60%): major shortfall
-  return Math.max(15, Math.round(pct * 0.6));
+  if (goal === 'cut') {
+    if (pct >= 80 && pct <= 105) return 100;  // under is fine on cut
+    if (pct >= 70 && pct < 80) return 92;
+    if (pct > 105 && pct <= 115) return 85;
+    if (pct >= 60 && pct < 70) return 80;
+    if (pct > 115 && pct <= 130) return 70;
+    if (pct > 130 && pct <= 150) return 55;
+    if (pct > 150) return 40;
+    return Math.max(20, Math.round(pct * 0.7));
+  }
+
+  if (goal === 'bulk') {
+    if (pct >= 85 && pct <= 120) return 100;  // slightly over ok on bulk
+    if (pct >= 75 && pct < 85) return 85;
+    if (pct > 120 && pct <= 135) return 88;
+    if (pct >= 60 && pct < 75) return 70;
+    if (pct > 135 && pct <= 160) return 65;
+    if (pct > 160) return 45;
+    return Math.max(15, Math.round(pct * 0.6));
+  }
+
+  // Maintain: symmetric
+  const dev = Math.abs(pct - 100);
+  if (dev <= 10) return 100;
+  if (dev <= 20) return 85;
+  if (dev <= 30) return 70;
+  if (dev <= 40) return 55;
+  return 35;
 }
+
 
 // ── Score calories ─────────────────────────────────────────────────────
 // On a cut: slightly under is BETTER than slightly over (deficit is the goal)
@@ -235,7 +276,7 @@ export function gradeDay(
       target: Math.round(targets.protein_g ?? 150),
       unit: 'g',
       isLimitType: false,
-      score: scoreHitNutrient(summary.total_protein_g ?? 0, targets.protein_g ?? 150),
+      score: scoreProtein(summary.total_protein_g ?? 0, targets.protein_g ?? 150),
       grade: 'A',
       feedback: feedbackHit('Protein', summary.total_protein_g ?? 0, targets.protein_g ?? 150, 'g'),
     },
@@ -246,7 +287,7 @@ export function gradeDay(
       target: Math.round(targets.carbs_g ?? 250),
       unit: 'g',
       isLimitType: false,
-      score: scoreHitNutrient(summary.total_carbs_g ?? 0, targets.carbs_g ?? 250),
+      score: scoreCarbsFat(summary.total_carbs_g ?? 0, targets.carbs_g ?? 250, goal),
       grade: 'A',
       feedback: feedbackHit('Carbs', summary.total_carbs_g ?? 0, targets.carbs_g ?? 250, 'g'),
     },
@@ -257,7 +298,7 @@ export function gradeDay(
       target: Math.round(targets.fat_g ?? 65),
       unit: 'g',
       isLimitType: false,
-      score: scoreHitNutrient(summary.total_fat_g ?? 0, targets.fat_g ?? 65),
+      score: scoreCarbsFat(summary.total_fat_g ?? 0, targets.fat_g ?? 65, goal),
       grade: 'A',
       feedback: feedbackHit('Fat', summary.total_fat_g ?? 0, targets.fat_g ?? 65, 'g'),
     },
@@ -268,7 +309,7 @@ export function gradeDay(
       target: Math.round(targets.fiber_g ?? 30),
       unit: 'g',
       isLimitType: false,
-      score: scoreHitNutrient(summary.total_fiber_g ?? 0, targets.fiber_g ?? 30),
+      score: scoreFiber(summary.total_fiber_g ?? 0, targets.fiber_g ?? 30),
       grade: 'A',
       feedback: feedbackHit('Fiber', summary.total_fiber_g ?? 0, targets.fiber_g ?? 30, 'g'),
     },
