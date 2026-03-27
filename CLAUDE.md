@@ -124,11 +124,11 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [ ] 2.4.2 "Why did I get this grade?" breakdown — show exactly which macros pulled you up or down (e.g. "protein 40g short → dropped from A to B-")
 - [ ] 2.4.3 Time-aware grading — toggle between "so far" (scales targets to current time of day, e.g. at 2pm only judge against ~60% of daily targets) and "full day" (current behavior). Default to "so far" on today, "full day" on past dates. This way you see a realistic grade throughout the day instead of F until dinner.
 - [ ] 2.4.4 Grade trend chart — average grade over weeks/months, are you improving?
-- [ ] 2.4.4 Streak tracking — consecutive days of A/B grades, longest streak
+- [ ] 2.4.5 Streak tracking — consecutive days of A/B grades, longest streak
 
 #### 2.5 Input UX Fixes
-- [ ] 2.5.1 Number inputs (servings, weight, deficit, etc.) allow clearing to empty while typing — only enforce min on blur, not on every keystroke
-- [ ] 2.5.2 All dates/times use user's local timezone, not UTC
+- [x] 2.5.1 Number inputs (servings, weight, deficit, etc.) allow clearing to empty while typing — only enforce min on blur, not on every keystroke ✅
+- [x] 2.5.2 All dates/times use user's local timezone, not UTC ✅
 
 ---
 
