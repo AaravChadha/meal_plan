@@ -112,7 +112,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [x] 2.3.8 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa"). NOT full meals — just a few station items that go together. ✅
 - [x] 2.3.9 Adding a combo logs each item separately so you can remove/edit individual items after ✅
 - [x] 2.3.10 Combo manager — create/edit/delete combos from My Foods page ✅
-- [ ] 2.3.11 Auto-detect combos — if the same 2+ items appear together in the same meal 3+ times within 10 days, suggest "Save as combo?" Auto-suggestions fade if not eaten recently.
+
 
 #### 2.4 Grades Improvements
 - [ ] 2.4.1 Asymmetric grading per nutrient — not all macros should penalize going over equally:
@@ -160,6 +160,7 @@ Make it smart at Purdue dining courts and give useful insights over time.
 - [ ] 3.3.5 Macro distribution pie chart per day
 - [ ] 3.3.6 Calorie trend line with target overlay
 - [ ] 3.3.7 Analytics UI polish — fix colors for consistency, use bar charts for daily data (not line — we're not tracking time within a day), better chart legends and labels
+- [ ] 3.3.8 Auto-detect combos — if the same 2+ items appear together in the same meal 3+ times within 10 days, suggest "Save as combo?" Auto-suggestions fade if not eaten recently.
 
 #### 3.4 Body Recomp Tracking
 - [ ] 3.4.1 Progress photos — upload weekly photos, view side-by-side comparison over time
