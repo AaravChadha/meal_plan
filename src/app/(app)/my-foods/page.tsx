@@ -158,6 +158,11 @@ export default function MyFoodsPage() {
   const [comboSearchResults, setComboSearchResults] = useState<FoodItem[]>([]);
   const [comboItems, setComboItems] = useState<{ food_item_id: number; name: string; servings: number; calories: number; protein_g: number; carbs_g: number; fat_g: number }[]>([]);
   const [deleteComboConfirm, setDeleteComboConfirm] = useState<number | null>(null);
+  const [editingComboId, setEditingComboId] = useState<number | null>(null);
+  const [editComboName, setEditComboName] = useState('');
+  const [editComboItems, setEditComboItems] = useState<{ food_item_id: number; name: string; servings: number; calories: number; protein_g: number; carbs_g: number; fat_g: number }[]>([]);
+  const [editComboSearch, setEditComboSearch] = useState('');
+  const [editComboSearchResults, setEditComboSearchResults] = useState<FoodItem[]>([]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -243,6 +248,44 @@ export default function MyFoodsPage() {
     setShowComboCreate(false);
     setComboName('');
     setComboItems([]);
+    loadData();
+  };
+
+  const handleEditComboSearch = async (query: string) => {
+    setEditComboSearch(query);
+    if (query.length < 2) { setEditComboSearchResults([]); return; }
+    try {
+      const res = await fetch(`/api/foods?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.success) setEditComboSearchResults(data.data);
+    } catch {}
+  };
+
+  const startEditCombo = (combo: Combo) => {
+    setEditingComboId(combo.id);
+    setEditComboName(combo.name);
+    setEditComboItems(combo.items.map(i => ({
+      food_item_id: i.food_item_id,
+      name: i.name,
+      servings: i.servings,
+      calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0,
+    })));
+    setEditComboSearch('');
+    setEditComboSearchResults([]);
+  };
+
+  const handleSaveCombo = async () => {
+    if (!editingComboId || !editComboName.trim() || editComboItems.length < 2) return;
+    await fetch('/api/combos', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingComboId,
+        name: editComboName,
+        items: editComboItems.map(i => ({ food_item_id: i.food_item_id, servings: i.servings })),
+      }),
+    });
+    setEditingComboId(null);
     loadData();
   };
 
@@ -476,43 +519,119 @@ export default function MyFoodsPage() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {combos.map(combo => (
-                    <div key={combo.id} style={{
-                      padding: '12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <div style={{ fontSize: '14px', fontWeight: 700 }}>{combo.name}</div>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          {deleteComboConfirm === combo.id ? (
-                            <button onClick={() => handleDeleteCombo(combo.id)} style={{
-                              padding: '4px 10px', border: 'none', borderRadius: 'var(--radius-sm)',
-                              background: '#ff4444', color: 'white', fontSize: '11px', cursor: 'pointer',
-                            }}>Confirm</button>
-                          ) : (
-                            <button onClick={() => setDeleteComboConfirm(combo.id)} style={{
-                              padding: '4px 10px', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 'var(--radius-sm)',
-                              background: 'none', color: '#ff4444', fontSize: '11px', cursor: 'pointer',
-                            }}>Delete</button>
-                          )}
-                        </div>
+                  {combos.map(combo => {
+                    const isEditing = editingComboId === combo.id;
+                    return (
+                      <div key={combo.id} style={{
+                        padding: '12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
+                        border: isEditing ? '1px solid var(--accent-primary)' : '1px solid transparent',
+                      }}>
+                        {isEditing ? (
+                          /* ── Edit mode ── */
+                          <>
+                            <div style={{ marginBottom: '10px' }}>
+                              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Combo Name</label>
+                              <input className="form-input" value={editComboName} onChange={e => setEditComboName(e.target.value)} style={{ fontSize: '13px' }} />
+                            </div>
+
+                            {/* Edit items */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px' }}>
+                              {editComboItems.map((item, i) => (
+                                <div key={item.food_item_id} style={{
+                                  display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px',
+                                  background: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', fontSize: '13px',
+                                }}>
+                                  <span style={{ flex: 1, fontWeight: 600 }}>{item.name}</span>
+                                  <input
+                                    type="number" min="0.25" step="0.25"
+                                    value={item.servings}
+                                    onChange={e => {
+                                      const val = parseFloat(e.target.value) || 1;
+                                      setEditComboItems(prev => prev.map((it, j) => j === i ? { ...it, servings: val } : it));
+                                    }}
+                                    style={{ width: '55px', fontSize: '12px', padding: '3px 6px', textAlign: 'center', borderRadius: '4px', border: '1px solid var(--border-primary)', background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}
+                                  />
+                                  <button onClick={() => setEditComboItems(prev => prev.filter((_, j) => j !== i))} style={{
+                                    background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '14px', padding: '0 4px',
+                                  }}>✕</button>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Search to add more items */}
+                            <div style={{ marginBottom: '12px' }}>
+                              <input className="form-input" placeholder="Search to add a food..." value={editComboSearch} onChange={e => handleEditComboSearch(e.target.value)} style={{ fontSize: '13px' }} />
+                              {editComboSearchResults.length > 0 && (
+                                <div style={{ maxHeight: '120px', overflow: 'auto', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  {editComboSearchResults.slice(0, 6).map((food) => (
+                                    <div key={food.id} onClick={() => {
+                                      if (!editComboItems.some(i => i.food_item_id === food.id)) {
+                                        setEditComboItems(prev => [...prev, { food_item_id: food.id, name: food.name, servings: 1, calories: food.calories, protein_g: food.protein_g, carbs_g: food.carbs_g, fat_g: food.fat_g }]);
+                                      }
+                                      setEditComboSearch(''); setEditComboSearchResults([]);
+                                    }} style={{
+                                      padding: '6px 10px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                                      fontSize: '12px', display: 'flex', justifyContent: 'space-between', background: 'var(--bg-card)',
+                                    }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-card)')}
+                                    >
+                                      <span style={{ fontWeight: 600 }}>{food.name}</span>
+                                      <span style={{ color: 'var(--text-muted)' }}>{Math.round(food.calories)} cal</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button className="btn btn-secondary" style={{ fontSize: '11px' }} onClick={() => setEditingComboId(null)}>Cancel</button>
+                              <button className="btn btn-primary" style={{ fontSize: '11px' }} disabled={!editComboName.trim() || editComboItems.length < 2} onClick={handleSaveCombo}>Save</button>
+                            </div>
+                          </>
+                        ) : (
+                          /* ── View mode ── */
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <div style={{ fontSize: '14px', fontWeight: 700, cursor: 'pointer' }} onClick={() => startEditCombo(combo)} title="Click to edit">{combo.name}</div>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button onClick={() => startEditCombo(combo)} style={{
+                                  padding: '4px 10px', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-sm)',
+                                  background: 'none', color: 'var(--text-secondary)', fontSize: '11px', cursor: 'pointer',
+                                }}>Edit</button>
+                                {deleteComboConfirm === combo.id ? (
+                                  <button onClick={() => handleDeleteCombo(combo.id)} style={{
+                                    padding: '4px 10px', border: 'none', borderRadius: 'var(--radius-sm)',
+                                    background: '#ff4444', color: 'white', fontSize: '11px', cursor: 'pointer',
+                                  }}>Confirm</button>
+                                ) : (
+                                  <button onClick={() => setDeleteComboConfirm(combo.id)} style={{
+                                    padding: '4px 10px', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 'var(--radius-sm)',
+                                    background: 'none', color: '#ff4444', fontSize: '11px', cursor: 'pointer',
+                                  }}>Delete</button>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '8px' }}>
+                              {combo.items.map((item, i) => (
+                                <div key={i} style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', gap: '6px' }}>
+                                  <span>•</span>
+                                  <span>{item.name}</span>
+                                  {item.servings !== 1 && <span style={{ color: 'var(--text-muted)' }}>×{item.servings}</span>}
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: 'rgba(255,107,107,0.15)', color: '#ff6b6b' }}>{combo.total_calories} cal</span>
+                              <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: 'rgba(78,205,196,0.15)', color: '#4ecdc4' }}>{combo.total_protein_g}g P</span>
+                              <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: 'rgba(255,209,102,0.15)', color: '#ffd166' }}>{combo.total_carbs_g}g C</span>
+                              <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: 'rgba(168,130,255,0.15)', color: '#a882ff' }}>{combo.total_fat_g}g F</span>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '8px' }}>
-                        {combo.items.map((item, i) => (
-                          <div key={i} style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', gap: '6px' }}>
-                            <span>•</span>
-                            <span>{item.name}</span>
-                            {item.servings !== 1 && <span style={{ color: 'var(--text-muted)' }}>×{item.servings}</span>}
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: 'rgba(255,107,107,0.15)', color: '#ff6b6b' }}>{combo.total_calories} cal</span>
-                        <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: 'rgba(78,205,196,0.15)', color: '#4ecdc4' }}>{combo.total_protein_g}g P</span>
-                        <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: 'rgba(255,209,102,0.15)', color: '#ffd166' }}>{combo.total_carbs_g}g C</span>
-                        <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: 'rgba(168,130,255,0.15)', color: '#a882ff' }}>{combo.total_fat_g}g F</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>

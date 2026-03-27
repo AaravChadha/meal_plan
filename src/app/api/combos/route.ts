@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
   `).all(userId);
 
   // Parse into structured data
-  const result = combos.map((c: Record<string, unknown>) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = (combos as any[]).map((c) => ({
     id: c.id,
     name: c.name,
     created_at: c.created_at,
@@ -69,6 +70,38 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data: { id: comboId } });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  }
+}
+
+// PUT /api/combos — update a combo (name, items)
+export async function PUT(request: NextRequest) {
+  const userId = getSessionUser(request);
+  if (!userId) return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+
+  try {
+    const { id, name, items } = await request.json() as { id: number; name?: string; items?: ComboItem[] };
+    if (!id) return NextResponse.json({ success: false, error: 'id required' }, { status: 400 });
+
+    const db = getDb();
+    const combo = db.prepare('SELECT id FROM food_combos WHERE id = ? AND user_id = ?').get(id, userId);
+    if (!combo) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+
+    if (name?.trim()) {
+      db.prepare('UPDATE food_combos SET name = ? WHERE id = ?').run(name.trim(), id);
+    }
+
+    if (items && items.length >= 2) {
+      db.prepare('DELETE FROM food_combo_items WHERE combo_id = ?').run(id);
+      const insertItem = db.prepare('INSERT INTO food_combo_items (combo_id, food_item_id, servings) VALUES (?, ?, ?)');
+      for (const item of items) {
+        insertItem.run(id, item.food_item_id, item.servings || 1);
+      }
+    }
+
+    return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ success: false, error: message }, { status: 400 });
