@@ -508,6 +508,27 @@ export default function FoodLogPage() {
           </button>
         </div>
 
+        {/* Copy banner */}
+        {copiedMeal && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 12px', marginBottom: '12px',
+            background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
+            borderRadius: 'var(--radius-sm)', fontSize: '12px', color: 'var(--accent-primary)',
+          }}>
+            <span>📋 Copied {copiedMeal.entries.length} item{copiedMeal.entries.length > 1 ? 's' : ''} from {MEAL_LABELS[copiedMeal.type]}</span>
+            <button
+              onClick={() => setCopiedMeal(null)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: '12px', color: 'var(--text-muted)', padding: '2px 6px',
+              }}
+            >
+              ✕ Clear
+            </button>
+          </div>
+        )}
+
         {/* Food Search */}
         <FoodSearch onSelect={handleFoodSelect} />
 
