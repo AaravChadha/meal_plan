@@ -105,7 +105,7 @@ export default function FoodLogPage() {
   const [editSwapResults, setEditSwapResults] = useState<FoodResult[]>([]);
 
   // Copy/paste meal state
-  const [copiedMeal, setCopiedMeal] = useState<{ type: string; entries: MealEntry[] } | null>(null);
+  const [copiedMeal, setCopiedMeal] = useState<{ type: string; date: string; entries: MealEntry[] } | null>(null);
 
   const fetchMeals = useCallback(async () => {
     try {
@@ -444,7 +444,7 @@ export default function FoodLogPage() {
 
   const handleCopyMeal = (type: string, entries: MealEntry[]) => {
     if (entries.length === 0) { showToastMsg('Nothing to copy'); return; }
-    setCopiedMeal({ type, entries });
+    setCopiedMeal({ type, date, entries });
     showToastMsg(`Copied ${entries.length} item${entries.length > 1 ? 's' : ''} from ${MEAL_LABELS[type]}`);
   };
 
@@ -688,7 +688,7 @@ export default function FoodLogPage() {
                         📋
                       </button>
                     )}
-                    {copiedMeal && copiedMeal.type === group.type && (
+                    {copiedMeal && copiedMeal.type === group.type && copiedMeal.date === date && (
                       <button
                         title="Cancel copy"
                         onClick={() => setCopiedMeal(null)}
@@ -701,7 +701,7 @@ export default function FoodLogPage() {
                         ✕ Cancel
                       </button>
                     )}
-                    {copiedMeal && copiedMeal.type !== group.type && (
+                    {copiedMeal && !(copiedMeal.type === group.type && copiedMeal.date === date) && (
                       <button
                         title={`Paste ${copiedMeal.entries.length} items from ${MEAL_LABELS[copiedMeal.type]}`}
                         onClick={() => handlePasteMeal(group.type)}
