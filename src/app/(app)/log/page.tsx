@@ -241,6 +241,28 @@ export default function FoodLogPage() {
     setShowModal(true);
   };
 
+  const handleComboSelect = async (combo: { id: number; name: string; items: { food_item_id: number; servings: number; name: string }[] }) => {
+    try {
+      for (const item of combo.items) {
+        const res = await fetch('/api/food-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            food_item_id: item.food_item_id,
+            meal_type: selectedMealType,
+            servings: item.servings,
+            logged_date: date,
+          }),
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+      }
+      fetchMeals();
+      showToastMsg(`Added ${combo.name} (${combo.items.length} items) to ${MEAL_LABELS[selectedMealType]}`);
+    } catch (err) {
+      console.error('Error logging combo:', err);
+    }
+  };
+
   const handleAddFood = async () => {
     if (!selectedFood) return;
 
@@ -530,7 +552,7 @@ export default function FoodLogPage() {
         )}
 
         {/* Food Search */}
-        <FoodSearch onSelect={handleFoodSelect} />
+        <FoodSearch onSelect={handleFoodSelect} onComboSelect={handleComboSelect} />
 
         {/* Baseline Checklist */}
         {baselineSlots.length > 0 && (

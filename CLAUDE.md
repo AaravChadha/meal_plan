@@ -110,7 +110,7 @@ The minimum features needed to actually use this app for daily nutrition trackin
 - [x] 2.3.6 Move food items between meals — use the meal dropdown in inline edit (2.3.5) instead of drag and drop ✅
 - [x] 2.3.7 Copy meals from a previous day ✅
 - [x] 2.3.8 Food combos — save groups of items you regularly eat together (e.g. "Wiley rice + guac + salsa"). NOT full meals — just a few station items that go together. ✅
-- [ ] 2.3.9 Adding a combo logs each item separately so you can remove/edit individual items after
+- [x] 2.3.9 Adding a combo logs each item separately so you can remove/edit individual items after ✅
 - [x] 2.3.10 Combo manager — create/edit/delete combos from My Foods page ✅
 - [ ] 2.3.11 Auto-detect combos — if the same 2+ items appear together in the same meal 3+ times within 10 days, suggest "Save as combo?" Auto-suggestions fade if not eaten recently.
 

@@ -24,17 +24,29 @@ interface FoodResult {
   log_count?: number;
 }
 
-interface FoodSearchProps {
-  onSelect: (food: FoodResult) => void;
+interface ComboResult {
+  id: number;
+  name: string;
+  total_calories: number;
+  total_protein_g: number;
+  total_carbs_g: number;
+  total_fat_g: number;
+  items: { food_item_id: number; servings: number; name: string }[];
 }
 
-export default function FoodSearch({ onSelect }: FoodSearchProps) {
+interface FoodSearchProps {
+  onSelect: (food: FoodResult) => void;
+  onComboSelect?: (combo: ComboResult) => void;
+}
+
+export default function FoodSearch({ onSelect, onComboSelect }: FoodSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<FoodResult[]>([]);
   const [recentFoods, setRecentFoods] = useState<FoodResult[]>([]);
   const [frequentFoods, setFrequentFoods] = useState<FoodResult[]>([]);
   const [favoriteFoods, setFavoriteFoods] = useState<FoodResult[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
+  const [comboResults, setComboResults] = useState<ComboResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showingRecents, setShowingRecents] = useState(false);
@@ -97,10 +109,12 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
     timerRef.current = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/foods?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
+        const [foodRes, comboRes] = await Promise.all([
+          fetch(`/api/foods?q=${encodeURIComponent(query)}`),
+          onComboSelect ? fetch('/api/combos') : Promise.resolve(null),
+        ]);
+        const data = await foodRes.json();
         if (data.success) {
-          // Boost frequent items to the top of search results
           const frequentIds = new Set(frequentFoods.map(f => f.id));
           const recentIds = new Set(recentFoods.map(f => f.id));
           const sorted = [...data.data].sort((a: FoodResult, b: FoodResult) => {
@@ -110,6 +124,17 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
           });
           setResults(sorted);
           setShowResults(true);
+        }
+        // Filter combos by search query
+        if (comboRes) {
+          const comboData = await comboRes.json();
+          if (comboData.success) {
+            const q = query.toLowerCase();
+            setComboResults(comboData.data.filter((c: ComboResult) =>
+              c.name.toLowerCase().includes(q) ||
+              c.items.some((i: { name: string }) => i.name.toLowerCase().includes(q))
+            ));
+          }
         }
       } catch {
         console.error('Search failed');
@@ -325,10 +350,52 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
             </>
           ) : isLoading ? (
             <div className="search-loading">Searching...</div>
-          ) : results.length === 0 ? (
+          ) : results.length === 0 && comboResults.length === 0 ? (
             <div className="search-loading">No results found</div>
           ) : (
-            results.map((food, idx) => renderFoodItem(food, idx))
+            <>
+              {comboResults.length > 0 && onComboSelect && (
+                <>
+                  <div style={{
+                    padding: '8px 14px', fontSize: '11px', fontWeight: 700,
+                    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px',
+                    borderBottom: '1px solid var(--border-primary)',
+                  }}>🍱 Combos</div>
+                  {comboResults.map(combo => (
+                    <div
+                      key={`combo-${combo.id}`}
+                      className="search-result-item"
+                      onClick={() => {
+                        onComboSelect(combo);
+                        setQuery('');
+                        setResults([]);
+                        setComboResults([]);
+                        setShowResults(false);
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="search-result-name">
+                          {combo.name}
+                          <span style={{
+                            fontSize: '10px', fontWeight: 600, padding: '1px 6px',
+                            borderRadius: '4px', marginLeft: '6px',
+                            background: 'rgba(251,146,60,0.12)', color: '#fb923c',
+                          }}>🍱 Combo · {combo.items.length} items</span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          {combo.items.map(i => i.name).join(' + ')}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="search-result-cal">{combo.total_calories} cal</div>
+                        <div className="search-result-serving">{combo.total_protein_g}p · {combo.total_carbs_g}c · {combo.total_fat_g}f</div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              {results.map((food, idx) => renderFoodItem(food, idx))}
+            </>
           )}
         </div>
       )}
